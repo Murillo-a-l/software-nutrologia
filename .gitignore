@@ -1,0 +1,23 @@
+# Node / TypeScript
+node_modules/
+dist/
+coverage/
+.env
+.env.local
+tmp/
+logs/
+
+# Prisma
+prisma/migrations/
+
+# OS / Editor files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.log
+
+# Build & cache
+.cache/
+.next/
+out/
