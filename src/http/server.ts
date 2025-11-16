@@ -1,6 +1,8 @@
 import express from 'express';
 import { calculateMetrics } from '../calc/calculateMetrics.js';
 import type { AssessmentInput, PatientBasic } from '../domain/types.js';
+import * as patientService from '../services/patientService.js';
+import * as assessmentService from '../services/assessmentService.js';
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -32,15 +34,21 @@ function convertBrazilianDateToISO(dateStr: string): string | null {
 }
 
 /**
+ * Converte Date para formato brasileiro DD/MM/YYYY
+ */
+function convertDateToBrazilian(date: Date): string {
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
+}
+
+/**
  * Valida os campos obrigatórios do paciente
  */
 function validatePatient(patient: any): { valid: boolean; error?: string } {
   if (!patient) {
     return { valid: false, error: "Campo 'patient' é obrigatório" };
-  }
-
-  if (!patient.id || typeof patient.id !== 'string') {
-    return { valid: false, error: "Campo 'patient.id' é obrigatório e deve ser string" };
   }
 
   if (!patient.name || typeof patient.name !== 'string') {
@@ -78,12 +86,16 @@ function validateAssessment(assessment: any): { valid: boolean; error?: string }
 }
 
 // ============================================================================
-// ROTAS
+// ROTAS - HEALTH CHECK
 // ============================================================================
 
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });
+
+// ============================================================================
+// ROTAS - CÁLCULOS (SEM PERSISTÊNCIA)
+// ============================================================================
 
 app.post('/calculate', (req, res) => {
   console.log('[POST /calculate] Recebendo requisição...');
@@ -130,7 +142,7 @@ app.post('/calculate', (req, res) => {
 
     // Constrói objeto PatientBasic
     const patient: PatientBasic = {
-      id: patientData.id,
+      id: patientData.id || 'temp',
       name: patientData.name,
       birthDate: birthDate,
       sex: patientData.sex,
@@ -139,7 +151,7 @@ app.post('/calculate', (req, res) => {
 
     // Constrói objeto AssessmentInput
     const assessment: AssessmentInput = {
-      patientId: assessmentData.patientId || patientData.id,
+      patientId: patient.id,
       dateTime: assessmentDateTime,
       weightKg: assessmentData.weightKg,
       waistCm: assessmentData.waistCm,
@@ -190,13 +202,270 @@ app.post('/calculate', (req, res) => {
 });
 
 // ============================================================================
+// ROTAS - PACIENTES
+// ============================================================================
+
+/**
+ * POST /patients - Criar novo paciente
+ */
+app.post('/patients', async (req, res) => {
+  console.log('[POST /patients] Criando novo paciente...');
+
+  try {
+    const { name, sex, birthDate, heightM } = req.body;
+
+    // Validação
+    if (!name || typeof name !== 'string') {
+      return res.status(400).json({ error: "Campo 'name' é obrigatório" });
+    }
+
+    if (!sex || !['M', 'F', 'OUTRO'].includes(sex)) {
+      return res.status(400).json({ error: "Campo 'sex' deve ser 'M', 'F' ou 'OUTRO'" });
+    }
+
+    if (!birthDate || typeof birthDate !== 'string') {
+      return res.status(400).json({ error: "Campo 'birthDate' é obrigatório (formato DD/MM/YYYY)" });
+    }
+
+    if (typeof heightM !== 'number' || heightM <= 0) {
+      return res.status(400).json({ error: "Campo 'heightM' é obrigatório e deve ser positivo" });
+    }
+
+    // Converte data
+    const isoBirthDate = convertBrazilianDateToISO(birthDate);
+    if (!isoBirthDate) {
+      return res.status(400).json({
+        error: "Formato de 'birthDate' inválido. Use DD/MM/YYYY (exemplo: 21/03/1995)"
+      });
+    }
+
+    const patient = await patientService.createPatient({
+      name,
+      sex,
+      birthDate: new Date(isoBirthDate),
+      heightM,
+    });
+
+    console.log('[POST /patients] Paciente criado:', patient.id);
+
+    return res.status(201).json({
+      ...patient,
+      birthDate: convertDateToBrazilian(patient.birthDate),
+    });
+
+  } catch (error) {
+    console.error('[POST /patients] Erro:', error);
+    return res.status(500).json({
+      error: 'Erro ao criar paciente',
+      details: error instanceof Error ? error.message : 'Erro desconhecido'
+    });
+  }
+});
+
+/**
+ * GET /patients/:id - Buscar paciente por ID
+ */
+app.get('/patients/:id', async (req, res) => {
+  console.log('[GET /patients/:id] Buscando paciente:', req.params.id);
+
+  try {
+    const patient = await patientService.getPatientById(req.params.id);
+
+    if (!patient) {
+      return res.status(404).json({ error: 'Paciente não encontrado' });
+    }
+
+    return res.json({
+      ...patient,
+      birthDate: convertDateToBrazilian(patient.birthDate),
+      assessments: patient.assessments?.map(a => ({
+        ...a,
+        dateTime: convertDateToBrazilian(a.dateTime),
+      })),
+    });
+
+  } catch (error) {
+    console.error('[GET /patients/:id] Erro:', error);
+    return res.status(500).json({
+      error: 'Erro ao buscar paciente',
+      details: error instanceof Error ? error.message : 'Erro desconhecido'
+    });
+  }
+});
+
+/**
+ * GET /patients - Listar todos os pacientes
+ */
+app.get('/patients', async (req, res) => {
+  console.log('[GET /patients] Listando pacientes...');
+
+  try {
+    const patients = await patientService.listPatients();
+
+    return res.json(
+      patients.map(p => ({
+        ...p,
+        birthDate: convertDateToBrazilian(p.birthDate),
+        assessments: p.assessments?.map(a => ({
+          ...a,
+          dateTime: convertDateToBrazilian(a.dateTime),
+        })),
+      }))
+    );
+
+  } catch (error) {
+    console.error('[GET /patients] Erro:', error);
+    return res.status(500).json({
+      error: 'Erro ao listar pacientes',
+      details: error instanceof Error ? error.message : 'Erro desconhecido'
+    });
+  }
+});
+
+// ============================================================================
+// ROTAS - AVALIAÇÕES
+// ============================================================================
+
+/**
+ * POST /patients/:id/assessments - Criar nova avaliação para um paciente
+ */
+app.post('/patients/:id/assessments', async (req, res) => {
+  console.log('[POST /patients/:id/assessments] Criando avaliação para paciente:', req.params.id);
+
+  try {
+    const patientId = req.params.id;
+    const assessmentData = req.body;
+
+    // Validação
+    if (typeof assessmentData.weightKg !== 'number' || assessmentData.weightKg <= 0) {
+      return res.status(400).json({
+        error: "Campo 'weightKg' é obrigatório e deve ser positivo"
+      });
+    }
+
+    // Converte dateTime se fornecido
+    let dateTime: Date | undefined;
+    if (assessmentData.dateTime) {
+      const isoDate = convertBrazilianDateToISO(assessmentData.dateTime);
+      if (!isoDate) {
+        return res.status(400).json({
+          error: "Formato de 'dateTime' inválido. Use DD/MM/YYYY"
+        });
+      }
+      dateTime = new Date(isoDate);
+    }
+
+    const assessment = await assessmentService.createAssessment({
+      patientId,
+      dateTime,
+      weightKg: assessmentData.weightKg,
+      bfPercent: assessmentData.bfPercent,
+      waistCm: assessmentData.waistCm,
+      hipCm: assessmentData.hipCm,
+      neckCm: assessmentData.neckCm,
+      skeletalMuscleKg: assessmentData.skeletalMuscleKg,
+      ffmKg: assessmentData.ffmKg,
+      visceralFatIndex: assessmentData.visceralFatIndex,
+      tbwL: assessmentData.tbwL,
+      ecwL: assessmentData.ecwL,
+      icwL: assessmentData.icwL,
+      phaseAngleDeg: assessmentData.phaseAngleDeg,
+      activityLevel: assessmentData.activityLevel,
+      estimatedIntakeKcal: assessmentData.estimatedIntakeKcal,
+      exerciseEnergyExpenditureKcal: assessmentData.exerciseEnergyExpenditureKcal,
+    });
+
+    console.log('[POST /patients/:id/assessments] Avaliação criada:', assessment?.id);
+
+    return res.status(201).json({
+      ...assessment,
+      dateTime: assessment ? convertDateToBrazilian(assessment.dateTime) : null,
+      patient: assessment?.patient ? {
+        ...assessment.patient,
+        birthDate: convertDateToBrazilian(assessment.patient.birthDate),
+      } : null,
+    });
+
+  } catch (error) {
+    console.error('[POST /patients/:id/assessments] Erro:', error);
+    return res.status(500).json({
+      error: 'Erro ao criar avaliação',
+      details: error instanceof Error ? error.message : 'Erro desconhecido'
+    });
+  }
+});
+
+/**
+ * GET /patients/:id/assessments - Listar avaliações de um paciente
+ */
+app.get('/patients/:id/assessments', async (req, res) => {
+  console.log('[GET /patients/:id/assessments] Listando avaliações do paciente:', req.params.id);
+
+  try {
+    const assessments = await assessmentService.getAssessmentsByPatientId(req.params.id);
+
+    return res.json(
+      assessments.map(a => ({
+        ...a,
+        dateTime: convertDateToBrazilian(a.dateTime),
+      }))
+    );
+
+  } catch (error) {
+    console.error('[GET /patients/:id/assessments] Erro:', error);
+    return res.status(500).json({
+      error: 'Erro ao listar avaliações',
+      details: error instanceof Error ? error.message : 'Erro desconhecido'
+    });
+  }
+});
+
+/**
+ * GET /assessments/:id - Buscar avaliação por ID
+ */
+app.get('/assessments/:id', async (req, res) => {
+  console.log('[GET /assessments/:id] Buscando avaliação:', req.params.id);
+
+  try {
+    const assessment = await assessmentService.getAssessmentById(req.params.id);
+
+    if (!assessment) {
+      return res.status(404).json({ error: 'Avaliação não encontrada' });
+    }
+
+    return res.json({
+      ...assessment,
+      dateTime: convertDateToBrazilian(assessment.dateTime),
+      patient: assessment.patient ? {
+        ...assessment.patient,
+        birthDate: convertDateToBrazilian(assessment.patient.birthDate),
+      } : null,
+    });
+
+  } catch (error) {
+    console.error('[GET /assessments/:id] Erro:', error);
+    return res.status(500).json({
+      error: 'Erro ao buscar avaliação',
+      details: error instanceof Error ? error.message : 'Erro desconhecido'
+    });
+  }
+});
+
+// ============================================================================
 // INICIALIZAÇÃO DO SERVIDOR
 // ============================================================================
 
 export const startServer = () => {
   app.listen(port, () => {
     console.log(`🚀 Server is running on http://localhost:${port}`);
-    console.log(`📊 POST /calculate - Endpoint de cálculos disponível`);
-    console.log(`💚 GET /health - Health check disponível`);
+    console.log(`\n📍 Endpoints disponíveis:`);
+    console.log(`   💚 GET  /health`);
+    console.log(`   📊 POST /calculate (cálculo sem persistência)`);
+    console.log(`   👤 POST /patients`);
+    console.log(`   👤 GET  /patients`);
+    console.log(`   👤 GET  /patients/:id`);
+    console.log(`   📋 POST /patients/:id/assessments`);
+    console.log(`   📋 GET  /patients/:id/assessments`);
+    console.log(`   📋 GET  /assessments/:id\n`);
   });
 };
