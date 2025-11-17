@@ -1,50 +1,80 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Layout } from '../components/Layout';
 import { apiClient } from '../api/client';
-import type { Patient, Assessment } from '../types';
+import type { Patient } from '../types';
 import { getCurrentDateBrazilian } from '../utils/date';
+import { AssessmentWizardSteps } from '../components/assessment/AssessmentWizardSteps';
+import { AssessmentStepBasics } from '../components/assessment/AssessmentStepBasics';
+import { AssessmentStepAnthropometry } from '../components/assessment/AssessmentStepAnthropometry';
+import { AssessmentStepBioimpedance } from '../components/assessment/AssessmentStepBioimpedance';
+import { AssessmentStepSkinfolds } from '../components/assessment/AssessmentStepSkinfolds';
+import { AssessmentStepReview } from '../components/assessment/AssessmentStepReview';
+import { AssessmentPreviewPanel } from '../components/assessment/AssessmentPreviewPanel';
+import type { AssessmentWizardFormData } from '../components/assessment/types';
+
+const wizardSteps = [
+  { title: 'Dados', subtitle: 'Informações da avaliação' },
+  { title: 'Antropometria', subtitle: 'Medidas corporais' },
+  { title: 'Bioimpedância', subtitle: 'Dados do equipamento', optional: true },
+  { title: 'Dobras', subtitle: 'Jackson & Pollock', optional: true },
+  { title: 'Revisão', subtitle: 'Resumo e envio' },
+];
+
+const optionalSkipLabels: Record<number, string> = {
+  2: 'Pular Bioimpedância',
+  3: 'Pular Dobras',
+};
+
+const initialFormState: AssessmentWizardFormData = {
+  dateTime: getCurrentDateBrazilian(),
+  weightKg: '',
+  bfPercent: '',
+  activityLevel: 'MODERADO',
+  waistCm: '',
+  hipCm: '',
+  neckCm: '',
+  heightM: '',
+  ffmKg: '',
+  skeletalMuscleKg: '',
+  visceralFatIndex: '',
+  tbwL: '',
+  ecwL: '',
+  icwL: '',
+  phaseAngleDeg: '',
+  tricepsMm: '',
+  subscapularMm: '',
+  suprailiacMm: '',
+  abdominalMm: '',
+  thighMm: '',
+  chestMm: '',
+  midaxillaryMm: '',
+  skinfoldProtocol: '',
+  skinfoldNotes: '',
+};
 
 export function AssessmentForm() {
   const { id: patientId } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
   const [patient, setPatient] = useState<Patient | null>(null);
-  const [loading, setLoading] = useState(false);
   const [loadingPatient, setLoadingPatient] = useState(true);
+  const [currentStep, setCurrentStep] = useState(0);
+  const [formData, setFormData] = useState<AssessmentWizardFormData>(initialFormState);
   const [error, setError] = useState<string | null>(null);
-  const [savedAssessment, setSavedAssessment] = useState<Assessment | null>(null);
-
-  const [formData, setFormData] = useState({
-    dateTime: getCurrentDateBrazilian(),
-    weightKg: '',
-    bfPercent: '',
-    waistCm: '',
-    hipCm: '',
-    activityLevel: 'MODERADO' as 'SEDENTARIO' | 'LEVE' | 'MODERADO' | 'INTENSO' | 'ATLETA',
-    ffmKg: '',
-    skeletalMuscleKg: '',
-    visceralFatIndex: '',
-    tbwL: '',
-    ecwL: '',
-    icwL: '',
-    // Skinfold measurements
-    tricepsMm: '',
-    subscapularMm: '',
-    suprailiacMm: '',
-    abdominalMm: '',
-    thighMm: '',
-    chestMm: '',
-    midaxillaryMm: '',
-    skinfoldProtocol: '',
-    skinfoldNotes: '',
-  });
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (patientId) {
       loadPatient(patientId);
     }
   }, [patientId]);
+
+  useEffect(() => {
+    if (patient?.heightM && !formData.heightM) {
+      setFormData((prev) => ({ ...prev, heightM: prev.heightM || patient.heightM.toFixed(2) }));
+    }
+  }, [patient, formData.heightM]);
 
   const loadPatient = async (id: string) => {
     try {
@@ -58,8 +88,39 @@ export function AssessmentForm() {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const updateFormData = (values: Partial<AssessmentWizardFormData>) => {
+    setFormData((prev) => ({ ...prev, ...values }));
+  };
+
+  const goToNextStep = () => {
+    setCurrentStep((prev) => Math.min(prev + 1, wizardSteps.length - 1));
+  };
+
+  const goToPreviousStep = () => {
+    setCurrentStep((prev) => Math.max(prev - 1, 0));
+  };
+
+  const handleSkipStep = () => {
+    goToNextStep();
+  };
+
+  const isStepValid = useMemo(() => {
+    const weight = toNumber(formData.weightKg);
+    const height = toNumber(formData.heightM) ?? patient?.heightM;
+
+    if (currentStep === 0) {
+      return Boolean(formData.dateTime && weight && weight > 0);
+    }
+
+    if (currentStep === 1) {
+      return Boolean(height && height > 0);
+    }
+
+    return true;
+  }, [currentStep, formData, patient]);
+
+  const handleSubmit = async (event?: React.FormEvent) => {
+    event?.preventDefault();
     setError(null);
 
     if (!patientId) {
@@ -67,44 +128,46 @@ export function AssessmentForm() {
       return;
     }
 
-    const weightKg = parseFloat(formData.weightKg);
-    if (isNaN(weightKg) || weightKg <= 0) {
-      setError('Peso é obrigatório e deve ser maior que zero');
+    const weight = toNumber(formData.weightKg);
+    if (!weight || weight <= 0) {
+      setError('Peso é obrigatório para salvar a avaliação.');
+      setCurrentStep(0);
       return;
     }
 
     try {
-      setLoading(true);
-      const assessment = await apiClient.createAssessment(patientId, {
+      setSubmitting(true);
+      await apiClient.createAssessment(patientId, {
         dateTime: formData.dateTime,
-        weightKg,
-        bfPercent: formData.bfPercent ? parseFloat(formData.bfPercent) : undefined,
-        waistCm: formData.waistCm ? parseFloat(formData.waistCm) : undefined,
-        hipCm: formData.hipCm ? parseFloat(formData.hipCm) : undefined,
+        weightKg: weight,
+        bfPercent: toNumber(formData.bfPercent),
+        waistCm: toNumber(formData.waistCm),
+        hipCm: toNumber(formData.hipCm),
+        neckCm: toNumber(formData.neckCm),
         activityLevel: formData.activityLevel,
-        ffmKg: formData.ffmKg ? parseFloat(formData.ffmKg) : undefined,
-        skeletalMuscleKg: formData.skeletalMuscleKg ? parseFloat(formData.skeletalMuscleKg) : undefined,
-        visceralFatIndex: formData.visceralFatIndex ? parseFloat(formData.visceralFatIndex) : undefined,
-        tbwL: formData.tbwL ? parseFloat(formData.tbwL) : undefined,
-        ecwL: formData.ecwL ? parseFloat(formData.ecwL) : undefined,
-        icwL: formData.icwL ? parseFloat(formData.icwL) : undefined,
-        // Skinfold measurements
-        tricepsMm: formData.tricepsMm ? parseFloat(formData.tricepsMm) : undefined,
-        subscapularMm: formData.subscapularMm ? parseFloat(formData.subscapularMm) : undefined,
-        suprailiacMm: formData.suprailiacMm ? parseFloat(formData.suprailiacMm) : undefined,
-        abdominalMm: formData.abdominalMm ? parseFloat(formData.abdominalMm) : undefined,
-        thighMm: formData.thighMm ? parseFloat(formData.thighMm) : undefined,
-        chestMm: formData.chestMm ? parseFloat(formData.chestMm) : undefined,
-        midaxillaryMm: formData.midaxillaryMm ? parseFloat(formData.midaxillaryMm) : undefined,
+        ffmKg: toNumber(formData.ffmKg),
+        skeletalMuscleKg: toNumber(formData.skeletalMuscleKg),
+        visceralFatIndex: toNumber(formData.visceralFatIndex),
+        tbwL: toNumber(formData.tbwL),
+        ecwL: toNumber(formData.ecwL),
+        icwL: toNumber(formData.icwL),
+        phaseAngleDeg: toNumber(formData.phaseAngleDeg),
+        tricepsMm: toNumber(formData.tricepsMm),
+        subscapularMm: toNumber(formData.subscapularMm),
+        suprailiacMm: toNumber(formData.suprailiacMm),
+        abdominalMm: toNumber(formData.abdominalMm),
+        thighMm: toNumber(formData.thighMm),
+        chestMm: toNumber(formData.chestMm),
+        midaxillaryMm: toNumber(formData.midaxillaryMm),
         skinfoldProtocol: formData.skinfoldProtocol || undefined,
         skinfoldNotes: formData.skinfoldNotes || undefined,
       });
 
-      setSavedAssessment(assessment);
+      navigate(`/patients/${patientId}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao criar avaliação');
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   };
 
@@ -112,7 +175,7 @@ export function AssessmentForm() {
     return (
       <Layout>
         <div className="text-center py-12">
-          <p className="text-gray-600">Carregando dados do paciente...</p>
+          <p className="text-sm text-muted">Carregando dados do paciente...</p>
         </div>
       </Layout>
     );
@@ -121,496 +184,112 @@ export function AssessmentForm() {
   if (!patient) {
     return (
       <Layout>
-        <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg">
-          Paciente não encontrado
-        </div>
+        <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg">Paciente não encontrado</div>
       </Layout>
     );
   }
 
-  // Se a avaliação foi salva, mostrar resumo
-  if (savedAssessment && savedAssessment.metrics) {
-    const metrics = savedAssessment.metrics;
+  const showSkipButton = optionalSkipLabels[currentStep];
 
-    return (
-      <Layout>
-        <div className="max-w-5xl mx-auto space-y-6">
-          <div className="bg-success/10 border border-success/30 text-success px-6 py-4 rounded-2xl">
-            <h2 className="text-xl font-semibold">Avaliação salva com sucesso</h2>
-            <p className="text-sm mt-1">Os indicadores foram calculados automaticamente e já estão disponíveis no histórico do paciente.</p>
-          </div>
-
-          <div className="bg-card border border-border rounded-2xl shadow-sm p-6 space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              <div>
-                <p className="text-xs uppercase tracking-wide text-muted">Paciente</p>
-                <h2 className="text-2xl font-semibold text-primary">{patient.name}</h2>
-              </div>
-              <div className="text-right">
-                <p className="text-xs uppercase tracking-wide text-muted">Data da avaliação</p>
-                <p className="text-lg font-semibold text-gray-900">{savedAssessment.dateTime}</p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {metrics.bmi && (
-                <div className="p-4 rounded-2xl border border-border bg-background">
-                  <p className="text-xs uppercase tracking-wide text-muted">IMC</p>
-                  <p className="text-2xl font-semibold text-gray-900">{metrics.bmi.toFixed(1)}</p>
-                  <p className="text-sm text-muted">{metrics.bmiCategory}</p>
-                </div>
-              )}
-              {savedAssessment.bfPercent && (
-                <div className="p-4 rounded-2xl border border-border bg-background">
-                  <p className="text-xs uppercase tracking-wide text-muted">% Gordura</p>
-                  <p className="text-2xl font-semibold text-gray-900">{savedAssessment.bfPercent.toFixed(1)}%</p>
-                  {metrics.fatMassKg && (
-                    <p className="text-sm text-muted">{metrics.fatMassKg.toFixed(1)} kg</p>
-                  )}
-                </div>
-              )}
-              {metrics.bodyCompScore !== undefined && (
-                <div className="p-4 rounded-2xl border border-border bg-background">
-                  <p className="text-xs uppercase tracking-wide text-muted">Body Comp Score</p>
-                  <p className="text-2xl font-semibold text-gray-900">{metrics.bodyCompScore}/100</p>
-                  <p className="text-sm text-muted">Índice de composição corporal</p>
-                </div>
-              )}
-              {metrics.tdee && (
-                <div className="p-4 rounded-2xl border border-border bg-background">
-                  <p className="text-xs uppercase tracking-wide text-muted">TDEE</p>
-                  <p className="text-2xl font-semibold text-gray-900">{metrics.tdee.toFixed(0)} kcal</p>
-                  <p className="text-sm text-muted">Gasto energético diário</p>
-                </div>
-              )}
-              {metrics.metabolicAgeYears && (
-                <div className="p-4 rounded-2xl border border-border bg-background">
-                  <p className="text-xs uppercase tracking-wide text-muted">Idade metabólica</p>
-                  <p className="text-2xl font-semibold text-gray-900">{metrics.metabolicAgeYears} anos</p>
-                </div>
-              )}
-              {metrics.cardiometabolicRiskLevel && (
-                <div className="p-4 rounded-2xl border border-border bg-background">
-                  <p className="text-xs uppercase tracking-wide text-muted">Risco cardiometabólico</p>
-                  <p className="text-2xl font-semibold text-gray-900 capitalize">{metrics.cardiometabolicRiskLevel}</p>
-                  <p className="text-sm text-muted">Score {metrics.cardiometabolicScore}</p>
-                </div>
-              )}
-
-              {/* % Gordura por Dobras */}
-              {metrics.bfPercentSkinfold && (
-                <div className="bg-teal-50 p-4 rounded-lg">
-                  <p className="text-sm text-gray-600">% Gordura (Dobras)</p>
-                  <p className="text-2xl font-bold text-primary">{metrics.bfPercentSkinfold.toFixed(1)}%</p>
-                  <p className="text-sm text-gray-700 mt-1">{metrics.bfPercentMethod}</p>
-                  {metrics.bodyDensity && (
-                    <p className="text-xs text-gray-600 mt-1">
-                      Densidade: {metrics.bodyDensity.toFixed(4)} g/cm³
-                    </p>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="flex flex-wrap gap-3">
-            <button
-              onClick={() => navigate(`/patients/${patientId}`)}
-              className="flex-1 min-w-[200px] bg-accent text-white rounded-xl px-4 py-3 font-semibold shadow-sm hover:bg-sky-500 transition"
-            >
-              Voltar para o paciente
-            </button>
-            <button
-              onClick={() => {
-                setSavedAssessment(null);
-                setFormData({
-                  ...formData,
-                  dateTime: getCurrentDateBrazilian(),
-                  weightKg: '',
-                  bfPercent: '',
-                  waistCm: '',
-                  hipCm: '',
-                });
-              }}
-              className="px-6 py-3 border border-border rounded-xl font-semibold text-primary bg-white hover:bg-gray-50"
-            >
-              Registrar nova avaliação
-            </button>
-          </div>
-        </div>
-      </Layout>
-    );
-  }
-
-  // Form de avaliação
   return (
     <Layout>
-      <div className="max-w-5xl mx-auto space-y-8">
-        {/* Header */}
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-muted">Avaliação clínica</p>
-          <h1 className="text-3xl font-semibold text-primary mt-2">Nova avaliação</h1>
-          <p className="text-sm text-muted mt-1">Paciente: {patient.name}</p>
-        </div>
+      <div className="bg-background min-h-screen">
+        <div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-muted">Avaliação clínica</p>
+            <h1 className="text-3xl font-semibold text-primary mt-2">Nova avaliação</h1>
+            <p className="text-sm text-muted mt-1">Paciente: {patient.name}</p>
+          </div>
 
-        {/* Form */}
-        <div className="bg-card border border-border rounded-2xl shadow-sm p-6">
-          {error && (
-            <div className="mb-6 bg-danger/10 border border-danger/30 text-danger px-4 py-3 rounded-xl">
-              {error}
-            </div>
-          )}
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+            <div className="xl:col-span-2 space-y-6">
+              <div className="bg-white border border-border rounded-2xl shadow-sm p-6 space-y-6">
+                <AssessmentWizardSteps steps={wizardSteps} currentStep={currentStep} />
 
-          <form onSubmit={handleSubmit} className="space-y-8">
-            {/* Dados da avaliação */}
-            <section className="space-y-4">
-              <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-muted">Sessão 01</p>
-                <h2 className="text-xl font-semibold text-gray-900">Dados da avaliação</h2>
-                <p className="text-sm text-muted">Defina data e medidas principais coletadas em consultório.</p>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-primary">Data da avaliação</label>
-                  <input
-                    type="text"
-                    value={formData.dateTime}
-                    onChange={(e) => setFormData({ ...formData, dateTime: e.target.value })}
-                    className="w-full rounded-xl border border-border px-4 py-2 focus:ring-2 focus:ring-accent focus:border-transparent outline-none bg-white"
-                    placeholder="DD/MM/AAAA"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-primary">
-                    Peso (kg) <span className="text-danger">*</span>
-                  </label>
-                  <input
-                    type="number"
-                    value={formData.weightKg}
-                    onChange={(e) => setFormData({ ...formData, weightKg: e.target.value })}
-                    className="w-full rounded-xl border border-border px-4 py-2 focus:ring-2 focus:ring-accent focus:border-transparent outline-none bg-white"
-                    placeholder="75.5"
-                    step="0.1"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-primary">% Gordura corporal</label>
-                  <input
-                    type="number"
-                    value={formData.bfPercent}
-                    onChange={(e) => setFormData({ ...formData, bfPercent: e.target.value })}
-                    className="w-full rounded-xl border border-border px-4 py-2 focus:ring-2 focus:ring-accent focus:border-transparent outline-none bg-white"
-                    placeholder="25.5"
-                    step="0.1"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-primary">Nível de atividade física</label>
-                  <select
-                    value={formData.activityLevel}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        activityLevel: e.target.value as any,
-                      })
-                    }
-                    className="w-full rounded-xl border border-border px-4 py-2 focus:ring-2 focus:ring-accent focus:border-transparent outline-none bg-white"
-                  >
-                    <option value="SEDENTARIO">Sedentário</option>
-                    <option value="LEVE">Leve</option>
-                    <option value="MODERADO">Moderado</option>
-                    <option value="INTENSO">Intenso</option>
-                    <option value="ATLETA">Atleta</option>
-                  </select>
-                </div>
-              </div>
-            </section>
+                {error && (
+                  <div className="bg-danger/10 border border-danger/30 text-danger px-4 py-3 rounded-xl text-sm">{error}</div>
+                )}
 
-            {/* Antropometria */}
-            <section className="space-y-4">
-              <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-muted">Sessão 02</p>
-                <h2 className="text-xl font-semibold text-gray-900">Antropometria</h2>
-                <p className="text-sm text-muted">Circunferências e medidas lineares para cálculo de RCQ/RCA.</p>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-primary">Circunferência da cintura (cm)</label>
-                  <input
-                    type="number"
-                    value={formData.waistCm}
-                    onChange={(e) => setFormData({ ...formData, waistCm: e.target.value })}
-                    className="w-full rounded-xl border border-border px-4 py-2 focus:ring-2 focus:ring-accent focus:border-transparent outline-none bg-white"
-                    placeholder="80"
-                    step="0.1"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-primary">Circunferência do quadril (cm)</label>
-                  <input
-                    type="number"
-                    value={formData.hipCm}
-                    onChange={(e) => setFormData({ ...formData, hipCm: e.target.value })}
-                    className="w-full rounded-xl border border-border px-4 py-2 focus:ring-2 focus:ring-accent focus:border-transparent outline-none bg-white"
-                    placeholder="95"
-                    step="0.1"
-                  />
-                </div>
-              </div>
-            </section>
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  {currentStep === 0 && <AssessmentStepBasics formData={formData} onChange={updateFormData} />}
+                  {currentStep === 1 && <AssessmentStepAnthropometry formData={formData} onChange={updateFormData} />}
+                  {currentStep === 2 && <AssessmentStepBioimpedance formData={formData} onChange={updateFormData} />}
+                  {currentStep === 3 && <AssessmentStepSkinfolds formData={formData} onChange={updateFormData} />}
+                  {currentStep === 4 && (
+                    <AssessmentStepReview formData={formData} onChange={updateFormData} patient={patient} />
+                  )}
 
-            {/* Bioimpedância */}
-            <section className="space-y-4">
-              <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-muted">Sessão 03</p>
-                <h2 className="text-xl font-semibold text-gray-900">Bioimpedância (opcional)</h2>
-                <p className="text-sm text-muted">Preencha quando houver dados do equipamento para enriquecer os cálculos.</p>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-primary">Massa livre de gordura (kg)</label>
-                  <input
-                    type="number"
-                    value={formData.ffmKg}
-                    onChange={(e) => setFormData({ ...formData, ffmKg: e.target.value })}
-                    className="w-full rounded-xl border border-border px-4 py-2 focus:ring-2 focus:ring-accent focus:border-transparent outline-none bg-white"
-                    placeholder="55"
-                    step="0.1"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-primary">Músculo esquelético (kg)</label>
-                  <input
-                    type="number"
-                    value={formData.skeletalMuscleKg}
-                    onChange={(e) => setFormData({ ...formData, skeletalMuscleKg: e.target.value })}
-                    className="w-full rounded-xl border border-border px-4 py-2 focus:ring-2 focus:ring-accent focus:border-transparent outline-none bg-white"
-                    placeholder="30"
-                    step="0.1"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-primary">Índice de gordura visceral</label>
-                  <input
-                    type="number"
-                    value={formData.visceralFatIndex}
-                    onChange={(e) => setFormData({ ...formData, visceralFatIndex: e.target.value })}
-                    className="w-full rounded-xl border border-border px-4 py-2 focus:ring-2 focus:ring-accent focus:border-transparent outline-none bg-white"
-                    placeholder="8"
-                    step="0.1"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-primary">Água corporal total (L)</label>
-                  <input
-                    type="number"
-                    value={formData.tbwL}
-                    onChange={(e) => setFormData({ ...formData, tbwL: e.target.value })}
-                    className="w-full rounded-xl border border-border px-4 py-2 focus:ring-2 focus:ring-accent focus:border-transparent outline-none bg-white"
-                    placeholder="40"
-                    step="0.1"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-primary">Água extracelular (L)</label>
-                  <input
-                    type="number"
-                    value={formData.ecwL}
-                    onChange={(e) => setFormData({ ...formData, ecwL: e.target.value })}
-                    className="w-full rounded-xl border border-border px-4 py-2 focus:ring-2 focus:ring-accent focus:border-transparent outline-none bg-white"
-                    placeholder="15"
-                    step="0.1"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-primary">Água intracelular (L)</label>
-                  <input
-                    type="number"
-                    value={formData.icwL}
-                    onChange={(e) => setFormData({ ...formData, icwL: e.target.value })}
-                    className="w-full rounded-xl border border-border px-4 py-2 focus:ring-2 focus:ring-accent focus:border-transparent outline-none bg-white"
-                    placeholder="25"
-                    step="0.1"
-                  />
-                </div>
-              </div>
-            </section>
+                  <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-border">
+                    <div className="flex flex-wrap gap-3">
+                      <button
+                        type="button"
+                        onClick={goToPreviousStep}
+                        disabled={currentStep === 0}
+                        className="px-5 py-2.5 rounded-2xl border border-border text-sm font-medium text-primary disabled:opacity-50"
+                      >
+                        Voltar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => navigate(`/patients/${patientId}`)}
+                        className="px-5 py-2.5 rounded-2xl border border-border text-sm font-medium text-gray-600"
+                      >
+                        Cancelar
+                      </button>
+                    </div>
 
-            {/* Placeholder for future sections */}
-            <section className="space-y-2">
-              <p className="text-xs uppercase tracking-[0.3em] text-muted">Sessão 04</p>
-              <div className="rounded-2xl border border-dashed border-border p-4 text-sm text-muted">
-                Dobras cutâneas (em breve)
-              </div>
-            </section>
+                    <div className="flex flex-wrap gap-3">
+                      {showSkipButton && (
+                        <button
+                          type="button"
+                          onClick={handleSkipStep}
+                          className="px-5 py-2.5 rounded-2xl border border-dashed border-border text-sm font-medium text-muted"
+                        >
+                          {showSkipButton}
+                        </button>
+                      )}
 
-            {/* Dobras Cutâneas (campos opcionais) */}
-            <div className="border-t pt-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                Dobras Cutâneas (Opcional)
-              </h3>
-              <p className="text-sm text-gray-600 mb-4">
-                Preencha as dobras para calcular % gordura por Jackson & Pollock + Siri.
-                É necessário 7 dobras ou 3 específicas (homens: peitoral, abdome, coxa / mulheres: tríceps, supra-ilíaca, coxa).
-              </p>
-
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Protocolo Utilizado
-                </label>
-                <select
-                  value={formData.skinfoldProtocol}
-                  onChange={(e) => setFormData({ ...formData, skinfoldProtocol: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent outline-none transition"
-                >
-                  <option value="">Selecione um protocolo</option>
-                  <option value="Jackson-Pollock 7 dobras">Jackson-Pollock 7 dobras</option>
-                  <option value="Jackson-Pollock 3 dobras">Jackson-Pollock 3 dobras</option>
-                </select>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Tríceps (mm)
-                  </label>
-                  <input
-                    type="number"
-                    value={formData.tricepsMm}
-                    onChange={(e) => setFormData({ ...formData, tricepsMm: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent outline-none transition"
-                    placeholder="12.5"
-                    step="0.1"
-                    min="0"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Subescapular (mm)
-                  </label>
-                  <input
-                    type="number"
-                    value={formData.subscapularMm}
-                    onChange={(e) => setFormData({ ...formData, subscapularMm: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent outline-none transition"
-                    placeholder="15.0"
-                    step="0.1"
-                    min="0"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Supra-ilíaca (mm)
-                  </label>
-                  <input
-                    type="number"
-                    value={formData.suprailiacMm}
-                    onChange={(e) => setFormData({ ...formData, suprailiacMm: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent outline-none transition"
-                    placeholder="18.0"
-                    step="0.1"
-                    min="0"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Abdominal (mm)
-                  </label>
-                  <input
-                    type="number"
-                    value={formData.abdominalMm}
-                    onChange={(e) => setFormData({ ...formData, abdominalMm: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent outline-none transition"
-                    placeholder="20.0"
-                    step="0.1"
-                    min="0"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Coxa (mm)
-                  </label>
-                  <input
-                    type="number"
-                    value={formData.thighMm}
-                    onChange={(e) => setFormData({ ...formData, thighMm: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent outline-none transition"
-                    placeholder="22.0"
-                    step="0.1"
-                    min="0"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Peitoral (mm)
-                  </label>
-                  <input
-                    type="number"
-                    value={formData.chestMm}
-                    onChange={(e) => setFormData({ ...formData, chestMm: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent outline-none transition"
-                    placeholder="10.0"
-                    step="0.1"
-                    min="0"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Axilar Média (mm)
-                  </label>
-                  <input
-                    type="number"
-                    value={formData.midaxillaryMm}
-                    onChange={(e) => setFormData({ ...formData, midaxillaryMm: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent outline-none transition"
-                    placeholder="14.0"
-                    step="0.1"
-                    min="0"
-                  />
-                </div>
-              </div>
-
-              <div className="mt-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Observações
-                </label>
-                <textarea
-                  value={formData.skinfoldNotes}
-                  onChange={(e) => setFormData({ ...formData, skinfoldNotes: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent outline-none transition"
-                  placeholder="Observações sobre as medições de dobras cutâneas..."
-                  rows={3}
-                />
+                      {currentStep === wizardSteps.length - 1 ? (
+                        <button
+                          type="submit"
+                          disabled={submitting}
+                          className="px-6 py-3 rounded-2xl bg-accent text-white font-semibold shadow-sm hover:bg-sky-500 transition disabled:opacity-70"
+                        >
+                          {submitting ? 'Salvando avaliação...' : 'Salvar avaliação'}
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={goToNextStep}
+                          disabled={!isStepValid}
+                          className="px-6 py-3 rounded-2xl bg-primary text-white font-semibold shadow-sm disabled:opacity-60"
+                        >
+                          Próximo
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </form>
               </div>
             </div>
 
-            {/* Actions */}
-            <div className="flex flex-wrap gap-3 pt-2">
-              <button
-                type="submit"
-                disabled={loading}
-                className="flex-1 min-w-[200px] bg-accent text-white rounded-xl px-4 py-3 font-semibold shadow-sm hover:bg-sky-500 transition disabled:opacity-70"
-              >
-                {loading ? 'Salvando avaliação...' : 'Salvar avaliação'}
-              </button>
-              <button
-                type="button"
-                onClick={() => navigate(`/patients/${patientId}`)}
-                className="px-6 py-3 border border-border rounded-xl font-semibold text-primary bg-white hover:bg-gray-50"
-              >
-                Cancelar
-              </button>
-            </div>
-          </form>
+            <AssessmentPreviewPanel patient={patient} formData={formData} />
+          </div>
         </div>
       </div>
     </Layout>
   );
+}
+
+function toNumber(value: string) {
+  if (!value) {
+    return undefined;
+  }
+
+  const parsed = parseFloat(value);
+  if (Number.isNaN(parsed)) {
+    return undefined;
+  }
+
+  return parsed;
 }
