@@ -76,8 +76,8 @@ export function Dashboard() {
         </div>
 
         {/* Quick Actions */}
-        <section className="rounded-[2rem] border border-border bg-slate-50 shadow-sm pt-10 pb-12 px-5 md:px-8 lg:px-16">
-          <div className="flex flex-col gap-2 text-center md:text-left">
+        <section className="pt-12 lg:pt-16 bg-slate-50 border border-border rounded-[2rem] shadow-sm pb-12 lg:pb-16 px-5 md:px-8">
+          <div className="flex flex-col gap-3 text-center md:text-left">
             <p className="text-xs font-medium uppercase tracking-[0.35em] text-muted">Fluxo diário</p>
             <h2 className="text-2xl font-semibold text-primary">Ações rápidas</h2>
             <p className="text-sm text-muted max-w-2xl">
@@ -86,7 +86,7 @@ export function Dashboard() {
             </p>
           </div>
 
-          <div className="mt-10 grid gap-y-8 md:grid-cols-2 md:gap-x-10 md:px-2 lg:px-10">
+          <div className="mt-10 grid gap-y-6 md:grid-cols-2 md:gap-x-9 md:gap-y-0 md:px-4 lg:px-20 xl:px-32">
             {[{
               title: 'Cadastro assistido',
               description: 'Inicie um novo prontuário com dados completos de identificação, contatos e histórico clínico.',
@@ -120,8 +120,8 @@ export function Dashboard() {
             }].map((action) => (
               <article key={action.title} className="flex flex-col items-start gap-y-4 lg:gap-y-6">
                 <figure>{action.icon}</figure>
-                <div className="lg:w-4/5">
-                  <div className="text-xl font-medium text-neutral-800 md:text-2xl">{action.title}</div>
+                <div className="lg:w-4/5 xl:w-3/4">
+                  <div className="text-xl font-medium text-neutral-800 md:text-2xl xl:text-3xl">{action.title}</div>
                   <p className="mt-2 text-sm font-medium text-neutral-500">{action.description}</p>
                 </div>
                 <Link
