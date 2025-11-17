@@ -24,6 +24,16 @@ export interface CreateAssessmentInput {
   activityLevel?: string;
   estimatedIntakeKcal?: number;
   exerciseEnergyExpenditureKcal?: number;
+  // Skinfold measurements (mm)
+  tricepsMm?: number;
+  subscapularMm?: number;
+  suprailiacMm?: number;
+  abdominalMm?: number;
+  thighMm?: number;
+  chestMm?: number;
+  midaxillaryMm?: number;
+  skinfoldProtocol?: string;
+  skinfoldNotes?: string;
 }
 
 // ============================================================================
@@ -63,6 +73,16 @@ export async function createAssessment(data: CreateAssessmentInput) {
       activityLevel: data.activityLevel,
       estimatedIntakeKcal: data.estimatedIntakeKcal,
       exerciseEnergyExpenditureKcal: data.exerciseEnergyExpenditureKcal,
+      // Skinfold measurements
+      tricepsMm: data.tricepsMm,
+      subscapularMm: data.subscapularMm,
+      suprailiacMm: data.suprailiacMm,
+      abdominalMm: data.abdominalMm,
+      thighMm: data.thighMm,
+      chestMm: data.chestMm,
+      midaxillaryMm: data.midaxillaryMm,
+      skinfoldProtocol: data.skinfoldProtocol,
+      skinfoldNotes: data.skinfoldNotes,
     },
   });
 
@@ -93,6 +113,16 @@ export async function createAssessment(data: CreateAssessmentInput) {
     activityLevel: assessment.activityLevel as any,
     estimatedIntakeKcal: assessment.estimatedIntakeKcal ?? undefined,
     exerciseEnergyExpenditureKcal: assessment.exerciseEnergyExpenditureKcal ?? undefined,
+    // Skinfold measurements
+    tricepsMm: assessment.tricepsMm ?? undefined,
+    subscapularMm: assessment.subscapularMm ?? undefined,
+    suprailiacMm: assessment.suprailiacMm ?? undefined,
+    abdominalMm: assessment.abdominalMm ?? undefined,
+    thighMm: assessment.thighMm ?? undefined,
+    chestMm: assessment.chestMm ?? undefined,
+    midaxillaryMm: assessment.midaxillaryMm ?? undefined,
+    skinfoldProtocol: assessment.skinfoldProtocol ?? undefined,
+    skinfoldNotes: assessment.skinfoldNotes ?? undefined,
   };
 
   // Calcula métricas
@@ -127,6 +157,10 @@ export async function createAssessment(data: CreateAssessmentInput) {
       smmWeightRatio: calculatedMetrics.smmWeightRatio ? Number(calculatedMetrics.smmWeightRatio) : null,
       bcmKg: calculatedMetrics.bcmKg ? Number(calculatedMetrics.bcmKg) : null,
       bodyCompScore: calculatedMetrics.bodyCompScore ? Number(calculatedMetrics.bodyCompScore) : null,
+      // Skinfold-derived metrics
+      bodyDensity: calculatedMetrics.bodyDensity ? Number(calculatedMetrics.bodyDensity) : null,
+      bfPercentSkinfold: calculatedMetrics.bfPercentSkinfold ? Number(calculatedMetrics.bfPercentSkinfold) : null,
+      bfPercentMethod: calculatedMetrics.bfPercentMethod ?? null,
     },
   });
 

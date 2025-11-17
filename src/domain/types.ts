@@ -24,6 +24,16 @@ export interface AssessmentInput {
   activityLevel?: "SEDENTARIO" | "LEVE" | "MODERADO" | "INTENSO" | "ATLETA";
   estimatedIntakeKcal?: number;
   exerciseEnergyExpenditureKcal?: number;
+  // Skinfold measurements (mm)
+  tricepsMm?: number;
+  subscapularMm?: number;
+  suprailiacMm?: number;
+  abdominalMm?: number;
+  thighMm?: number;
+  chestMm?: number;
+  midaxillaryMm?: number;
+  skinfoldProtocol?: string;
+  skinfoldNotes?: string;
 }
 
 export interface CalculatedMetrics {
@@ -54,4 +64,8 @@ export interface CalculatedMetrics {
   fmi?: number | string;
   smmWeightRatio?: number | string;
   bodyCompScore?: number | string;
+  // Skinfold-derived metrics
+  bodyDensity?: number | string;
+  bfPercentSkinfold?: number | string;
+  bfPercentMethod?: string;
 }
