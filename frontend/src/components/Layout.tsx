@@ -13,31 +13,31 @@ export function Layout({ children }: LayoutProps) {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-background">
       {/* Header */}
-      <header className="bg-primary text-white shadow-lg">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
+      <header className="bg-primary text-white shadow-sm">
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="flex justify-between items-center h-14">
             <Link to="/dashboard" className="flex items-center">
-              <h1 className="text-2xl font-bold">NutroLab</h1>
+              <h1 className="text-xl font-semibold tracking-tight">NutroLab</h1>
             </Link>
 
-            <nav className="flex items-center space-x-6">
+            <nav className="flex items-center gap-6">
               <Link
                 to="/dashboard"
-                className="hover:text-secondary transition-colors"
+                className="text-sm hover:text-accent transition-colors"
               >
                 Dashboard
               </Link>
               <Link
                 to="/patients"
-                className="hover:text-secondary transition-colors"
+                className="text-sm hover:text-accent transition-colors"
               >
                 Pacientes
               </Link>
               <button
                 onClick={handleLogout}
-                className="bg-secondary hover:bg-blue-600 px-4 py-2 rounded-lg transition-colors"
+                className="text-sm bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-md transition-colors"
               >
                 Sair
               </button>
@@ -48,15 +48,15 @@ export function Layout({ children }: LayoutProps) {
 
       {/* Main Content */}
       <main className="flex-1">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="max-w-6xl mx-auto px-6 py-8">
           {children}
         </div>
       </main>
 
       {/* Footer */}
-      <footer className="bg-primary text-white mt-auto">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <p className="text-center text-sm text-gray-300">
+      <footer className="bg-white border-t border-border mt-auto">
+        <div className="max-w-6xl mx-auto px-6 py-4">
+          <p className="text-center text-xs text-muted">
             © 2024 NutroLab - Sistema de Nutrologia
           </p>
         </div>
