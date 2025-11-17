@@ -76,106 +76,80 @@ export function Dashboard() {
         </div>
 
         {/* Quick Actions */}
-        <section className="pt-12 lg:pt-16 bg-slate-50 border border-border rounded-[2rem] shadow-sm pb-12 lg:pb-16 px-5 md:px-8">
-          <div className="flex flex-col gap-3 text-center md:text-left">
-            <p className="text-xs font-medium uppercase tracking-[0.35em] text-muted">Fluxo diário</p>
-            <h2 className="text-2xl font-semibold text-primary">Ações rápidas</h2>
-            <p className="text-sm text-muted max-w-2xl">
-              Estruture o atendimento com cadastros rápidos e acesso imediato ao histórico. Use os atalhos abaixo para navegar pelas
-              principais etapas do NutroLab.
-            </p>
-          </div>
+        <section className="pt-12 lg:pt-16 pb-12 lg:pb-16 bg-slate-50 border border-border rounded-[2rem] shadow-sm">
+          <div className="max-w-6xl mx-auto px-4 xl:px-0">
+            <div className="flex flex-col items-center gap-y-3 text-center md:text-left md:items-start">
+              <p className="text-xs font-semibold uppercase tracking-[0.35em] text-muted">Fluxo diário</p>
+              <h2 className="text-2xl md:text-3xl font-semibold text-primary">Ações rápidas</h2>
+              <p className="text-sm text-muted max-w-2xl">
+                Estruture o atendimento com cadastros rápidos e acesso imediato ao histórico. Use os atalhos abaixo para navegar pelas
+                principais etapas do NutroLab.
+              </p>
+            </div>
 
-          <div className="mt-10 grid gap-y-6 md:grid-cols-2 md:gap-x-9 md:gap-y-0 md:px-4 lg:px-20 xl:px-32">
-            {[{
-              title: 'Cadastro assistido',
-              description: 'Inicie um novo prontuário com dados completos de identificação, contatos e histórico clínico.',
-              action: '+ Cadastrar paciente',
-              to: '/patients/new',
-              icon: (
-                <svg className="h-7 text-slate-400 md:h-8" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                  <path
-                    fillRule="evenodd"
-                    d="M14.615 1.595a.75.75 0 0 1 .359.852L12.982 9.75h7.268a.75.75 0 0 1 .548 1.262l-10.5 11.25a.75.75 0 0 1-1.272-.71l1.992-7.302H3.75a.75.75 0 0 1-.548-1.262l10.5-11.25a.75.75 0 0 1 .913-.143Z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              ),
-              variant: 'primary',
-            }, {
-              title: 'Lista inteligente',
-              description: 'Consulte pacientes já cadastrados, filtre avaliações recentes e abra cada prontuário em poucos cliques.',
-              action: 'Ver lista completa',
-              to: '/patients',
-              icon: (
-                <svg className="h-7 text-slate-400 md:h-8" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                  <path
-                    fillRule="evenodd"
-                    d="M3 6a3 3 0 0 1 3-3h12a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V6Zm4.5 7.5a.75.75 0 0 1 .75.75v2.25a.75.75 0 0 1-1.5 0v-2.25a.75.75 0 0 1 .75-.75Zm3.75-1.5a.75.75 0 0 0-1.5 0v4.5a.75.75 0 0 0 1.5 0V12Zm2.25-3a.75.75 0 0 1 .75.75v6.75a.75.75 0 0 1-1.5 0V9.75A.75.75 0 0 1 13.5 9Zm3.75-1.5a.75.75 0 0 0-1.5 0v9a.75.75 0 0 0 1.5 0v-9Z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              ),
-              variant: 'secondary',
-            }].map((action) => (
-              <article key={action.title} className="flex flex-col items-start gap-y-4 lg:gap-y-6">
-                <figure>{action.icon}</figure>
-                <div className="lg:w-4/5 xl:w-3/4">
-                  <div className="text-xl font-medium text-neutral-800 md:text-2xl xl:text-3xl">{action.title}</div>
-                  <p className="mt-2 text-sm font-medium text-neutral-500">{action.description}</p>
-                </div>
-                <Link
-                  to={action.to}
-                  className={
-                    action.variant === 'primary'
-                      ? 'inline-flex items-center whitespace-nowrap text-sm font-semibold px-4 py-2 rounded-[0.625rem] bg-accent text-white shadow-sm hover:bg-sky-500 transition'
-                      : 'inline-flex items-center whitespace-nowrap text-sm font-semibold px-4 py-2 rounded-[0.625rem] border border-neutral-200 bg-white text-primary hover:bg-gray-50 transition'
-                  }
-                >
-                  {action.action}
-                  <svg className="ml-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <div className="mt-10 grid gap-y-6 md:grid-cols-2 md:gap-x-9 md:gap-y-0 md:px-4 lg:px-20 xl:px-32">
+              {[{
+                title: 'Advanced Analytics',
+                eyebrow: 'Cadastro assistido',
+                description: 'Inicie um novo prontuário completo com dados clínicos, contatos e histórico alimentar.',
+                action: '+ Cadastrar paciente',
+                to: '/patients/new',
+                icon: (
+                  <svg className="h-6 text-slate-400 md:h-7 lg:h-8" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                     <path
                       fillRule="evenodd"
-                      d="M12.97 3.97a.75.75 0 0 1 1.06 0l7.5 7.5a.75.75 0 0 1 0 1.06l-7.5 7.5a.75.75 0 1 1-1.06-1.06l6.22-6.22H3a.75.75 0 0 1 0-1.5h16.19l-6.22-6.22a.75.75 0 0 1 0-1.06Z"
+                      d="M14.615 1.595a.75.75 0 0 1 .359.852L12.982 9.75h7.268a.75.75 0 0 1 .548 1.262l-10.5 11.25a.75.75 0 0 1-1.272-.71l1.992-7.302H3.75a.75.75 0 0 1-.548-1.262l10.5-11.25a.75.75 0 0 1 .913-.143Z"
                       clipRule="evenodd"
                     />
                   </svg>
-                </Link>
-              </article>
-            ))}
+                ),
+                variant: 'primary',
+              }, {
+                title: 'Seamless Integration',
+                eyebrow: 'Lista inteligente',
+                description: 'Consulte pacientes cadastrados, filtre avaliações recentes e abra prontuários completos em segundos.',
+                action: 'Ver lista completa',
+                to: '/patients',
+                icon: (
+                  <svg className="h-6 text-slate-400 md:h-7 lg:h-8" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path
+                      fillRule="evenodd"
+                      d="M3 6a3 3 0 0 1 3-3h12a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V6Zm4.5 7.5a.75.75 0 0 1 .75.75v2.25a.75.75 0 0 1-1.5 0v-2.25a.75.75 0 0 1 .75-.75Zm3.75-1.5a.75.75 0 0 0-1.5 0v4.5a.75.75 0 0 0 1.5 0V12Zm2.25-3a.75.75 0 0 1 .75.75v6.75a.75.75 0 0 1-1.5 0V9.75A.75.75 0 0 1 13.5 9Zm3.75-1.5a.75.75 0 0 0-1.5 0v9a.75.75 0 0 0 1.5 0v-9Z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                ),
+                variant: 'secondary',
+              }].map((action) => (
+                <article key={action.title} className="flex flex-col items-start gap-y-4 lg:gap-y-6">
+                  <figure>{action.icon}</figure>
+                  <div className="lg:w-4/5 xl:w-3/4">
+                    <p className="text-xs font-medium text-muted uppercase tracking-wide">{action.eyebrow}</p>
+                    <div className="text-xl font-medium text-neutral-800 md:text-2xl xl:text-3xl">{action.title}</div>
+                    <p className="mt-2 text-sm font-medium text-neutral-500">{action.description}</p>
+                  </div>
+                  <Link
+                    to={action.to}
+                    className={
+                      action.variant === 'primary'
+                        ? 'items-center justify-center whitespace-nowrap text-sm font-semibold transition-all focus:shadow-[0_0px_0px_2px_rgba(15,23,42,0.25),0_2px_10px_0px_rgba(0,0,0,0.05)] shadow-[0_2px_10px_0px_rgba(0,0,0,0.05)] border border-transparent bg-accent text-white hover:bg-sky-500 px-4 py-2 rounded-[0.625rem] flex'
+                        : 'items-center justify-center whitespace-nowrap text-sm font-semibold transition-all focus:shadow-[0_0px_0px_2px_rgba(15,23,42,0.25),0_2px_10px_0px_rgba(0,0,0,0.05)] shadow-[0_2px_10px_0px_rgba(0,0,0,0.05)] border border-neutral-100 bg-white text-primary hover:border-neutral-200 hover:bg-neutral-100 px-4 py-2 rounded-[0.625rem] flex'
+                    }
+                  >
+                    {action.action}
+                    <svg className="shrink-0 ml-1.5 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                      <path
+                        fillRule="evenodd"
+                        d="M12.97 3.97a.75.75 0 0 1 1.06 0l7.5 7.5a.75.75 0 0 1 0 1.06l-7.5 7.5a.75.75 0 1 1-1.06-1.06l6.22-6.22H3a.75.75 0 0 1 0-1.5h16.19l-6.22-6.22a.75.75 0 0 1 0-1.06Z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </Link>
+                </article>
+              ))}
+            </div>
           </div>
         </section>
-
-        {/* Recent Patients */}
-        <div className="bg-card border border-border rounded-2xl shadow-sm p-6">
-          <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-            <div>
-              <p className="text-xs font-medium uppercase tracking-wide text-muted">Últimos atendimentos</p>
-              <h2 className="text-xl font-semibold text-gray-900">Pacientes recentes</h2>
-            </div>
-            <Link to="/patients" className="text-sm font-semibold text-accent hover:text-sky-500">
-              Ver todos
-            </Link>
-          </div>
-
-        {/* Quick Actions */}
-        <div className="bg-card border border-border rounded-2xl shadow-sm p-6">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <p className="text-xs font-medium uppercase tracking-wide text-muted">Fluxo diário</p>
-              <h2 className="text-xl font-semibold text-gray-900">Ações rápidas</h2>
-              <p className="text-sm text-muted mt-1">Acelere o atendimento iniciando um novo cadastro ou navegando pela lista completa.</p>
-            </div>
-            <div className="flex flex-wrap gap-3">
-              <Link to="/patients/new" className="bg-accent text-white rounded-xl px-4 py-2 font-semibold shadow-sm hover:bg-sky-500 transition">
-                + Cadastrar novo paciente
-              </Link>
-              <Link to="/patients" className="bg-white text-primary border border-border rounded-xl px-4 py-2 hover:bg-gray-50 font-semibold">
-                Ver lista completa de pacientes
-              </Link>
-            </div>
-          </div>
-        </div>
 
         {/* Recent Patients */}
         <div className="bg-card border border-border rounded-2xl shadow-sm p-6">
