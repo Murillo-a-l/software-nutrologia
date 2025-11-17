@@ -30,57 +30,81 @@ export function Dashboard() {
 
   return (
     <Layout>
-      <div className="space-y-6">
+      <div className="space-y-8">
         {/* Header */}
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900 tracking-tight">Dashboard</h1>
-          <p className="text-sm text-muted mt-1">Visão geral do sistema</p>
+          <p className="text-sm uppercase tracking-[0.3em] text-muted">Painel clínico</p>
+          <div className="mt-2 flex flex-wrap items-center gap-3">
+            <h1 className="text-3xl font-semibold text-primary">Dashboard</h1>
+            <span className="inline-flex items-center gap-1 rounded-full bg-white px-3 py-1 text-xs font-medium text-muted border border-border">
+              Operacional
+            </span>
+          </div>
+          <p className="text-sm text-muted mt-2 max-w-2xl">
+            Acompanhe indicadores assistenciais, cadastre pacientes e visualize rapidamente o histórico das últimas avaliações.
+          </p>
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-card border border-border rounded-xl shadow-sm p-4">
-            <p className="text-xs uppercase tracking-wide text-muted font-medium">Total de Pacientes</p>
-            <p className="text-2xl font-semibold text-gray-900 mt-2">
-              {loading ? '...' : patients.length}
-            </p>
-          </div>
-
-          <div className="bg-card border border-border rounded-xl shadow-sm p-4">
-            <p className="text-xs uppercase tracking-wide text-muted font-medium">Avaliações Hoje</p>
-            <p className="text-2xl font-semibold text-gray-900 mt-2">-</p>
-          </div>
-
-          <div className="bg-card border border-border rounded-xl shadow-sm p-4">
-            <p className="text-xs uppercase tracking-wide text-muted font-medium">Novos este Mês</p>
-            <p className="text-2xl font-semibold text-gray-900 mt-2">-</p>
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-2">
+          {[
+            { label: 'Total de pacientes', value: loading ? '...' : patients.length, icon: (
+              <svg className="h-8 w-8 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM6 21v-1a4 4 0 014-4h4a4 4 0 014 4v1" />
+              </svg>
+            ) },
+            { label: 'Avaliações hoje', value: '—', icon: (
+              <svg className="h-8 w-8 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            ) },
+            { label: 'Novos no mês', value: '—', icon: (
+              <svg className="h-8 w-8 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+              </svg>
+            ) },
+          ].map((kpi) => (
+            <div key={kpi.label} className="bg-card border border-border rounded-2xl shadow-sm p-4 flex flex-col gap-4">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-medium uppercase tracking-wide text-muted">{kpi.label}</p>
+                {kpi.icon}
+              </div>
+              <p className="text-3xl font-semibold text-gray-900">{kpi.value}</p>
+              <span className="text-xs text-muted">Atualizado em tempo real</span>
+            </div>
+          ))}
         </div>
 
         {/* Quick Actions */}
-        <div className="bg-card border border-border rounded-xl shadow-sm p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Ações Rápidas</h2>
-          <div className="flex flex-wrap gap-3">
-            <Link
-              to="/patients/new"
-              className="bg-accent hover:bg-sky-500 text-white px-4 py-2 rounded-lg font-semibold shadow-sm transition-colors"
-            >
-              + Cadastrar Novo Paciente
-            </Link>
-            <Link
-              to="/patients"
-              className="bg-white border border-border text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-50 font-medium transition-colors"
-            >
-              Ver Lista Completa
-            </Link>
+        <div className="bg-card border border-border rounded-2xl shadow-sm p-6">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <p className="text-xs font-medium uppercase tracking-wide text-muted">Fluxo diário</p>
+              <h2 className="text-xl font-semibold text-gray-900">Ações rápidas</h2>
+              <p className="text-sm text-muted mt-1">Acelere o atendimento iniciando um novo cadastro ou navegando pela lista completa.</p>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <Link to="/patients/new" className="bg-accent text-white rounded-xl px-4 py-2 font-semibold shadow-sm hover:bg-sky-500 transition">
+                + Cadastrar novo paciente
+              </Link>
+              <Link to="/patients" className="bg-white text-primary border border-border rounded-xl px-4 py-2 hover:bg-gray-50 font-semibold">
+                Ver lista completa de pacientes
+              </Link>
+            </div>
           </div>
         </div>
 
         {/* Recent Patients */}
-        <div className="bg-card border border-border rounded-xl shadow-sm p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">
-            Pacientes Recentes
-          </h2>
+        <div className="bg-card border border-border rounded-2xl shadow-sm p-6">
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <div>
+              <p className="text-xs font-medium uppercase tracking-wide text-muted">Últimos atendimentos</p>
+              <h2 className="text-xl font-semibold text-gray-900">Pacientes recentes</h2>
+            </div>
+            <Link to="/patients" className="text-sm font-semibold text-accent hover:text-sky-500">
+              Ver todos
+            </Link>
+          </div>
 
           {loading && (
             <div className="text-center py-8">
