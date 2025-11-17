@@ -1,0 +1,82 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Patient {
+  id          String       @id @default(cuid())
+  name        String
+  sex         String
+  birthDate   DateTime
+  heightM     Float
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  assessments Assessment[]
+}
+
+model Assessment {
+  id               String    @id @default(cuid())
+  patientId        String
+  patient          Patient   @relation(fields: [patientId], references: [id])
+  dateTime         DateTime  @default(now())
+  weightKg         Float?
+  bfPercent        Float?
+  waistCm          Float?
+  hipCm            Float?
+  neckCm           Float?
+  skeletalMuscleKg Float?
+  ffmKg            Float?
+  visceralFatIndex Float?
+  tbwL             Float?
+  ecwL             Float?
+  icwL             Float?
+  phaseAngleDeg    Float?
+  activityLevel    String?
+  estimatedIntakeKcal Float?
+  exerciseEnergyExpenditureKcal Float?
+  proteinMassKg    Float?
+  mineralMassKg    Float?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  metrics          Metrics?
+}
+
+model Metrics {
+  id                       String     @id @default(cuid())
+  assessmentId             String     @unique
+  assessment               Assessment @relation(fields: [assessmentId], references: [id])
+  bmi                      Float?
+  bmiCategory              String?
+  waistHeightRatio         Float?
+  waistHeightRisk          String?
+  waistHipRatio            Float?
+  waistHipRisk             String?
+  fatMassKg                Float?
+  leanMassKg               Float?
+  smi                      Float?
+  bmrMifflin               Float?
+  bmrCunningham            Float?
+  tdee                     Float?
+  energyAvailability       Float?
+  eaCategory               String?
+  ecwTbwRatio              Float?
+  cardiometabolicScore     Int?
+  cardiometabolicRiskLevel String?
+  redsScore                Int?
+  redsRiskLevel            String?
+  metabolicAgeYears        Int?
+  ffmi                     Float?
+  fmi                      Float?
+  smmWeightRatio           Float?
+  bcmKg                    Float?
+  bodyCompScore            Int?
+  createdAt                DateTime   @default(now())
+  updatedAt                DateTime   @updatedAt
+}
