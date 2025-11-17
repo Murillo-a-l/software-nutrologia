@@ -13,6 +13,11 @@ export default {
         card: "#FFFFFF",
         border: "#E5E7EB",
         muted: "#6B7280",
+        danger: "#EF4444",
+        success: "#16A34A",
+      },
+      fontFamily: {
+        sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
       },
     },
   },
