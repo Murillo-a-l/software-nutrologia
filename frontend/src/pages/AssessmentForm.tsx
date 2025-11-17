@@ -28,6 +28,16 @@ export function AssessmentForm() {
     tbwL: '',
     ecwL: '',
     icwL: '',
+    // Skinfold measurements
+    tricepsMm: '',
+    subscapularMm: '',
+    suprailiacMm: '',
+    abdominalMm: '',
+    thighMm: '',
+    chestMm: '',
+    midaxillaryMm: '',
+    skinfoldProtocol: '',
+    skinfoldNotes: '',
   });
 
   useEffect(() => {
@@ -78,6 +88,16 @@ export function AssessmentForm() {
         tbwL: formData.tbwL ? parseFloat(formData.tbwL) : undefined,
         ecwL: formData.ecwL ? parseFloat(formData.ecwL) : undefined,
         icwL: formData.icwL ? parseFloat(formData.icwL) : undefined,
+        // Skinfold measurements
+        tricepsMm: formData.tricepsMm ? parseFloat(formData.tricepsMm) : undefined,
+        subscapularMm: formData.subscapularMm ? parseFloat(formData.subscapularMm) : undefined,
+        suprailiacMm: formData.suprailiacMm ? parseFloat(formData.suprailiacMm) : undefined,
+        abdominalMm: formData.abdominalMm ? parseFloat(formData.abdominalMm) : undefined,
+        thighMm: formData.thighMm ? parseFloat(formData.thighMm) : undefined,
+        chestMm: formData.chestMm ? parseFloat(formData.chestMm) : undefined,
+        midaxillaryMm: formData.midaxillaryMm ? parseFloat(formData.midaxillaryMm) : undefined,
+        skinfoldProtocol: formData.skinfoldProtocol || undefined,
+        skinfoldNotes: formData.skinfoldNotes || undefined,
       });
 
       setSavedAssessment(assessment);
@@ -174,6 +194,20 @@ export function AssessmentForm() {
                   <p className="text-xs uppercase tracking-wide text-muted">Risco cardiometabólico</p>
                   <p className="text-2xl font-semibold text-gray-900 capitalize">{metrics.cardiometabolicRiskLevel}</p>
                   <p className="text-sm text-muted">Score {metrics.cardiometabolicScore}</p>
+                </div>
+              )}
+
+              {/* % Gordura por Dobras */}
+              {metrics.bfPercentSkinfold && (
+                <div className="bg-teal-50 p-4 rounded-lg">
+                  <p className="text-sm text-gray-600">% Gordura (Dobras)</p>
+                  <p className="text-2xl font-bold text-primary">{metrics.bfPercentSkinfold.toFixed(1)}%</p>
+                  <p className="text-sm text-gray-700 mt-1">{metrics.bfPercentMethod}</p>
+                  {metrics.bodyDensity && (
+                    <p className="text-xs text-gray-600 mt-1">
+                      Densidade: {metrics.bodyDensity.toFixed(4)} g/cm³
+                    </p>
+                  )}
                 </div>
               )}
             </div>
@@ -410,6 +444,152 @@ export function AssessmentForm() {
                 Dobras cutâneas (em breve)
               </div>
             </section>
+
+            {/* Dobras Cutâneas (campos opcionais) */}
+            <div className="border-t pt-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Dobras Cutâneas (Opcional)
+              </h3>
+              <p className="text-sm text-gray-600 mb-4">
+                Preencha as dobras para calcular % gordura por Jackson & Pollock + Siri.
+                É necessário 7 dobras ou 3 específicas (homens: peitoral, abdome, coxa / mulheres: tríceps, supra-ilíaca, coxa).
+              </p>
+
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Protocolo Utilizado
+                </label>
+                <select
+                  value={formData.skinfoldProtocol}
+                  onChange={(e) => setFormData({ ...formData, skinfoldProtocol: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent outline-none transition"
+                >
+                  <option value="">Selecione um protocolo</option>
+                  <option value="Jackson-Pollock 7 dobras">Jackson-Pollock 7 dobras</option>
+                  <option value="Jackson-Pollock 3 dobras">Jackson-Pollock 3 dobras</option>
+                </select>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Tríceps (mm)
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.tricepsMm}
+                    onChange={(e) => setFormData({ ...formData, tricepsMm: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent outline-none transition"
+                    placeholder="12.5"
+                    step="0.1"
+                    min="0"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Subescapular (mm)
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.subscapularMm}
+                    onChange={(e) => setFormData({ ...formData, subscapularMm: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent outline-none transition"
+                    placeholder="15.0"
+                    step="0.1"
+                    min="0"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Supra-ilíaca (mm)
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.suprailiacMm}
+                    onChange={(e) => setFormData({ ...formData, suprailiacMm: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent outline-none transition"
+                    placeholder="18.0"
+                    step="0.1"
+                    min="0"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Abdominal (mm)
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.abdominalMm}
+                    onChange={(e) => setFormData({ ...formData, abdominalMm: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent outline-none transition"
+                    placeholder="20.0"
+                    step="0.1"
+                    min="0"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Coxa (mm)
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.thighMm}
+                    onChange={(e) => setFormData({ ...formData, thighMm: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent outline-none transition"
+                    placeholder="22.0"
+                    step="0.1"
+                    min="0"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Peitoral (mm)
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.chestMm}
+                    onChange={(e) => setFormData({ ...formData, chestMm: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent outline-none transition"
+                    placeholder="10.0"
+                    step="0.1"
+                    min="0"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Axilar Média (mm)
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.midaxillaryMm}
+                    onChange={(e) => setFormData({ ...formData, midaxillaryMm: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent outline-none transition"
+                    placeholder="14.0"
+                    step="0.1"
+                    min="0"
+                  />
+                </div>
+              </div>
+
+              <div className="mt-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Observações
+                </label>
+                <textarea
+                  value={formData.skinfoldNotes}
+                  onChange={(e) => setFormData({ ...formData, skinfoldNotes: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent outline-none transition"
+                  placeholder="Observações sobre as medições de dobras cutâneas..."
+                  rows={3}
+                />
+              </div>
+            </div>
 
             {/* Actions */}
             <div className="flex flex-wrap gap-3 pt-2">

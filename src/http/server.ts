@@ -176,6 +176,16 @@ app.post('/calculate', (req, res) => {
       activityLevel: assessmentData.activityLevel,
       estimatedIntakeKcal: assessmentData.estimatedIntakeKcal,
       exerciseEnergyExpenditureKcal: assessmentData.exerciseEnergyExpenditureKcal,
+      // Skinfold measurements
+      tricepsMm: assessmentData.tricepsMm,
+      subscapularMm: assessmentData.subscapularMm,
+      suprailiacMm: assessmentData.suprailiacMm,
+      abdominalMm: assessmentData.abdominalMm,
+      thighMm: assessmentData.thighMm,
+      chestMm: assessmentData.chestMm,
+      midaxillaryMm: assessmentData.midaxillaryMm,
+      skinfoldProtocol: assessmentData.skinfoldProtocol,
+      skinfoldNotes: assessmentData.skinfoldNotes,
     };
 
     // Calcula as métricas
@@ -381,6 +391,16 @@ app.post('/patients/:id/assessments', async (req, res) => {
       activityLevel: assessmentData.activityLevel,
       estimatedIntakeKcal: assessmentData.estimatedIntakeKcal,
       exerciseEnergyExpenditureKcal: assessmentData.exerciseEnergyExpenditureKcal,
+      // Skinfold measurements
+      tricepsMm: assessmentData.tricepsMm,
+      subscapularMm: assessmentData.subscapularMm,
+      suprailiacMm: assessmentData.suprailiacMm,
+      abdominalMm: assessmentData.abdominalMm,
+      thighMm: assessmentData.thighMm,
+      chestMm: assessmentData.chestMm,
+      midaxillaryMm: assessmentData.midaxillaryMm,
+      skinfoldProtocol: assessmentData.skinfoldProtocol,
+      skinfoldNotes: assessmentData.skinfoldNotes,
     });
 
     console.log('[POST /patients/:id/assessments] Avaliação criada:', assessment?.id);

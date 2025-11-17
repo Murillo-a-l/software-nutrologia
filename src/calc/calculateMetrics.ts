@@ -297,6 +297,139 @@ function calculateBodyCompScore(
 }
 
 // ============================================================================
+// SKINFOLD CALCULATIONS (Jackson & Pollock, Siri/Brozek)
+// ============================================================================
+
+interface SkinfoldData {
+  tricepsMm?: number;
+  subscapularMm?: number;
+  suprailiacMm?: number;
+  abdominalMm?: number;
+  thighMm?: number;
+  chestMm?: number;
+  midaxillaryMm?: number;
+}
+
+interface SkinfoldResult {
+  bodyDensity: number;
+  bfPercentSkinfold: number;
+  bfPercentMethod: string;
+}
+
+/**
+ * Calcula densidade corporal usando Jackson & Pollock (7 dobras)
+ * Fórmulas:
+ * Homens: D = 1.112 - 0.00043499 * S7 + 0.00000055 * S7^2 - 0.00028826 * idade
+ * Mulheres: D = 1.097 - 0.00046971 * S7 + 0.00000056 * S7^2 - 0.00012828 * idade
+ */
+function calculateBodyDensityJP7(
+  skinfolds: SkinfoldData,
+  age: number,
+  sex: "M" | "F" | "OUTRO"
+): SkinfoldResult | null {
+  const { chestMm, midaxillaryMm, tricepsMm, subscapularMm, abdominalMm, suprailiacMm, thighMm } = skinfolds;
+
+  // Verifica se todas as 7 dobras estão disponíveis
+  if (
+    chestMm === undefined ||
+    midaxillaryMm === undefined ||
+    tricepsMm === undefined ||
+    subscapularMm === undefined ||
+    abdominalMm === undefined ||
+    suprailiacMm === undefined ||
+    thighMm === undefined
+  ) {
+    return null;
+  }
+
+  const S7 = chestMm + midaxillaryMm + tricepsMm + subscapularMm + abdominalMm + suprailiacMm + thighMm;
+
+  let bodyDensity: number;
+  if (sex === "M") {
+    bodyDensity = 1.112 - 0.00043499 * S7 + 0.00000055 * S7 * S7 - 0.00028826 * age;
+  } else {
+    // F ou OUTRO usa fórmula feminina
+    bodyDensity = 1.097 - 0.00046971 * S7 + 0.00000056 * S7 * S7 - 0.00012828 * age;
+  }
+
+  // Calcular % gordura usando Siri
+  const bfPercentSkinfold = (495 / bodyDensity) - 450;
+
+  return {
+    bodyDensity,
+    bfPercentSkinfold,
+    bfPercentMethod: "Skinfold (Jackson-Pollock 7 + Siri)"
+  };
+}
+
+/**
+ * Calcula densidade corporal usando Jackson & Pollock (3 dobras)
+ * Fórmulas:
+ * Homens (peito, abdome, coxa): D = 1.10938 - 0.0008267 * S3 + 0.0000016 * S3^2 - 0.0002574 * idade
+ * Mulheres (tríceps, supra-ilíaca, coxa): D = 1.0994921 - 0.0009929 * S3 + 0.0000023 * S3^2 - 0.0001392 * idade
+ */
+function calculateBodyDensityJP3(
+  skinfolds: SkinfoldData,
+  age: number,
+  sex: "M" | "F" | "OUTRO"
+): SkinfoldResult | null {
+  let S3: number | null = null;
+
+  if (sex === "M") {
+    // Homens: peito, abdome, coxa
+    const { chestMm, abdominalMm, thighMm } = skinfolds;
+    if (chestMm !== undefined && abdominalMm !== undefined && thighMm !== undefined) {
+      S3 = chestMm + abdominalMm + thighMm;
+    }
+  } else {
+    // Mulheres: tríceps, supra-ilíaca, coxa
+    const { tricepsMm, suprailiacMm, thighMm } = skinfolds;
+    if (tricepsMm !== undefined && suprailiacMm !== undefined && thighMm !== undefined) {
+      S3 = tricepsMm + suprailiacMm + thighMm;
+    }
+  }
+
+  if (S3 === null) {
+    return null;
+  }
+
+  let bodyDensity: number;
+  if (sex === "M") {
+    bodyDensity = 1.10938 - 0.0008267 * S3 + 0.0000016 * S3 * S3 - 0.0002574 * age;
+  } else {
+    bodyDensity = 1.0994921 - 0.0009929 * S3 + 0.0000023 * S3 * S3 - 0.0001392 * age;
+  }
+
+  // Calcular % gordura usando Siri
+  const bfPercentSkinfold = (495 / bodyDensity) - 450;
+
+  return {
+    bodyDensity,
+    bfPercentSkinfold,
+    bfPercentMethod: "Skinfold (Jackson-Pollock 3 + Siri)"
+  };
+}
+
+/**
+ * Calcula métricas de dobras cutâneas (tenta 7 dobras primeiro, depois 3)
+ */
+function calculateSkinfoldMetrics(
+  skinfolds: SkinfoldData,
+  age: number,
+  sex: "M" | "F" | "OUTRO"
+): SkinfoldResult | null {
+  // Tenta primeiro com 7 dobras
+  const jp7Result = calculateBodyDensityJP7(skinfolds, age, sex);
+  if (jp7Result !== null) {
+    return jp7Result;
+  }
+
+  // Se não houver 7 dobras, tenta com 3 dobras
+  const jp3Result = calculateBodyDensityJP3(skinfolds, age, sex);
+  return jp3Result;
+}
+
+// ============================================================================
 // FUNÇÃO PRINCIPAL
 // ============================================================================
 
@@ -452,6 +585,24 @@ export function calculateMetrics(
     smi,
     ecwTbwRatio
   );
+
+  // 16) Skinfold measurements (Jackson & Pollock + Siri)
+  const skinfoldData: SkinfoldData = {
+    tricepsMm: input.tricepsMm,
+    subscapularMm: input.subscapularMm,
+    suprailiacMm: input.suprailiacMm,
+    abdominalMm: input.abdominalMm,
+    thighMm: input.thighMm,
+    chestMm: input.chestMm,
+    midaxillaryMm: input.midaxillaryMm,
+  };
+
+  const skinfoldResult = calculateSkinfoldMetrics(skinfoldData, age, patient.sex);
+  if (skinfoldResult !== null) {
+    result.bodyDensity = skinfoldResult.bodyDensity;
+    result.bfPercentSkinfold = skinfoldResult.bfPercentSkinfold;
+    result.bfPercentMethod = skinfoldResult.bfPercentMethod;
+  }
 
   return result;
 }

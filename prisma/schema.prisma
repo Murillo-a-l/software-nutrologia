@@ -43,6 +43,16 @@ model Assessment {
   exerciseEnergyExpenditureKcal Float?
   proteinMassKg    Float?
   mineralMassKg    Float?
+  // Skinfold measurements (mm)
+  tricepsMm        Float?
+  subscapularMm    Float?
+  suprailiacMm     Float?
+  abdominalMm      Float?
+  thighMm          Float?
+  chestMm          Float?
+  midaxillaryMm    Float?
+  skinfoldProtocol String?
+  skinfoldNotes    String?
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
   metrics          Metrics?
@@ -77,6 +87,10 @@ model Metrics {
   smmWeightRatio           Float?
   bcmKg                    Float?
   bodyCompScore            Int?
+  // Skinfold-derived metrics
+  bodyDensity              Float?
+  bfPercentSkinfold        Float?
+  bfPercentMethod          String?
   createdAt                DateTime   @default(now())
   updatedAt                DateTime   @updatedAt
 }
