@@ -30,21 +30,22 @@ export function PatientList() {
     <Layout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex justify-between items-start">
+        <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-semibold text-gray-900 tracking-tight">Pacientes</h1>
-            <p className="text-sm text-muted mt-1">Lista completa de pacientes cadastrados</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-muted">Gestão clínica</p>
+            <h1 className="text-3xl font-semibold text-primary mt-1">Pacientes</h1>
+            <p className="text-sm text-muted mt-2">Acompanhe todos os pacientes cadastrados e acesse seus históricos e avaliações.</p>
           </div>
           <Link
             to="/patients/new"
-            className="bg-accent hover:bg-sky-500 text-white px-4 py-2 rounded-lg font-semibold shadow-sm transition-colors"
+            className="bg-accent text-white rounded-xl px-4 py-2 font-semibold shadow-sm hover:bg-sky-500 transition"
           >
-            + Novo Paciente
+            + Novo paciente
           </Link>
         </div>
 
         {/* Content */}
-        <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
+        <div className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden">
           {loading && (
             <div className="text-center py-12">
               <p className="text-sm text-muted">Carregando pacientes...</p>
@@ -78,53 +79,30 @@ export function PatientList() {
             <div className="overflow-x-auto">
               <table className="min-w-full">
                 <thead>
-                  <tr className="border-b border-border bg-gray-50">
-                    <th className="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
-                      Nome
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
-                      Idade
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
-                      Sexo
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
-                      Altura
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
-                      Avaliações
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
-                      Ações
-                    </th>
+                  <tr className="border-b border-border bg-gray-50/80">
+                    <th className="px-6 py-3 text-left text-[11px] font-semibold text-muted uppercase tracking-[0.2em]">Nome</th>
+                    <th className="px-6 py-3 text-left text-[11px] font-semibold text-muted uppercase tracking-[0.2em]">Idade</th>
+                    <th className="px-6 py-3 text-left text-[11px] font-semibold text-muted uppercase tracking-[0.2em]">Sexo</th>
+                    <th className="px-6 py-3 text-left text-[11px] font-semibold text-muted uppercase tracking-[0.2em]">Altura</th>
+                    <th className="px-6 py-3 text-left text-[11px] font-semibold text-muted uppercase tracking-[0.2em]">Avaliações</th>
+                    <th className="px-6 py-3 text-left text-[11px] font-semibold text-muted uppercase tracking-[0.2em]">Ações</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-border bg-white">
+                <tbody className="divide-y divide-border bg-card">
                   {patients.map((patient) => (
                     <tr key={patient.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">
-                          {patient.name}
-                        </div>
-                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{patient.name}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-muted">
                         {calculateAge(patient.birthDate)} anos
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-muted">
                         {patient.sex === 'M' ? 'Masculino' : patient.sex === 'F' ? 'Feminino' : 'Outro'}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-muted">
-                        {patient.heightM.toFixed(2)} m
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-muted">
-                        {patient.assessments?.length || 0}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <Link
-                          to={`/patients/${patient.id}`}
-                          className="bg-white border border-border text-gray-800 px-3 py-1.5 rounded-md hover:bg-gray-50 transition-colors inline-block"
-                        >
-                          Ver
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-muted">{patient.heightM.toFixed(2)} m</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-muted">{patient.assessments?.length || 0}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold">
+                        <Link to={`/patients/${patient.id}`} className="text-accent hover:text-sky-500 transition">
+                          Ver detalhes
                         </Link>
                       </td>
                     </tr>
