@@ -10,6 +10,7 @@ export function AssessmentDetail() {
   const [assessment, setAssessment] = useState<Assessment | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -26,6 +27,19 @@ export function AssessmentDetail() {
       setError(err instanceof Error ? err.message : 'Erro ao carregar avaliação');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDownloadPdf = async () => {
+    if (!id) return;
+
+    try {
+      setDownloadingPdf(true);
+      await apiClient.downloadAssessmentReport(id);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Erro ao baixar relatório');
+    } finally {
+      setDownloadingPdf(false);
     }
   };
 
@@ -67,14 +81,35 @@ export function AssessmentDetail() {
               )}
               <p className="text-gray-600">Data: {assessment.dateTime}</p>
             </div>
-            {assessment.patient && (
-              <Link
-                to={`/patients/${assessment.patient.id}`}
-                className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
+            <div className="flex gap-3">
+              <button
+                onClick={handleDownloadPdf}
+                disabled={downloadingPdf}
+                className="bg-secondary hover:bg-blue-600 disabled:bg-gray-400 text-white px-6 py-3 rounded-lg font-semibold transition-colors shadow-md hover:shadow-lg flex items-center gap-2"
               >
-                Ver Paciente
-              </Link>
-            )}
+                {downloadingPdf ? (
+                  <>
+                    <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Gerando PDF...
+                  </>
+                ) : (
+                  <>
+                    📄 Baixar PDF do Laudo
+                  </>
+                )}
+              </button>
+              {assessment.patient && (
+                <Link
+                  to={`/patients/${assessment.patient.id}`}
+                  className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
+                >
+                  Ver Paciente
+                </Link>
+              )}
+            </div>
           </div>
         </div>
 

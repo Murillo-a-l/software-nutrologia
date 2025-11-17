@@ -72,6 +72,51 @@ class ApiClient {
       body: JSON.stringify(data),
     });
   }
+
+  // ===== REPORTS =====
+
+  /**
+   * Baixa o PDF da avaliação
+   * Retorna a URL do blob para download
+   */
+  async downloadAssessmentReport(assessmentId: string): Promise<void> {
+    const url = `${API_BASE_URL}/assessments/${assessmentId}/report`;
+
+    try {
+      const response = await fetch(url);
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.error || `Erro ao gerar relatório: ${response.statusText}`
+        );
+      }
+
+      // Obter blob do PDF
+      const blob = await response.blob();
+
+      // Criar URL temporária do blob
+      const blobUrl = window.URL.createObjectURL(blob);
+
+      // Criar link temporário para download
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = `relatorio-avaliacao-${assessmentId}.pdf`;
+      document.body.appendChild(link);
+
+      // Clicar no link para iniciar download
+      link.click();
+
+      // Limpar
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error('Erro desconhecido ao baixar relatório');
+    }
+  }
 }
 
 export const apiClient = new ApiClient();

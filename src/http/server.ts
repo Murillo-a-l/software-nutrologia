@@ -3,6 +3,7 @@ import { calculateMetrics } from '../calc/calculateMetrics.js';
 import type { AssessmentInput, PatientBasic } from '../domain/types.js';
 import * as patientService from '../services/patientService.js';
 import * as assessmentService from '../services/assessmentService.js';
+import { generateAssessmentReportPdf } from '../reports/assessmentReport.js';
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -451,6 +452,46 @@ app.get('/assessments/:id', async (req, res) => {
   }
 });
 
+/**
+ * GET /assessments/:id/report - Gerar PDF da avaliação
+ */
+app.get('/assessments/:id/report', async (req, res) => {
+  console.log('[GET /assessments/:id/report] Gerando PDF para avaliação:', req.params.id);
+
+  try {
+    const pdfBuffer = await generateAssessmentReportPdf(req.params.id);
+
+    // Configurar headers para download do PDF
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="relatorio-avaliacao-${req.params.id}.pdf"`);
+    res.setHeader('Content-Length', pdfBuffer.length);
+
+    // Enviar PDF
+    res.send(pdfBuffer);
+
+    console.log('[GET /assessments/:id/report] PDF gerado com sucesso');
+  } catch (error) {
+    console.error('[GET /assessments/:id/report] Erro:', error);
+
+    if (error instanceof Error && error.message.includes('não encontrad')) {
+      return res.status(404).json({
+        error: error.message
+      });
+    }
+
+    if (error instanceof Error && error.message.includes('métricas')) {
+      return res.status(400).json({
+        error: error.message
+      });
+    }
+
+    return res.status(500).json({
+      error: 'Erro ao gerar relatório PDF',
+      details: error instanceof Error ? error.message : 'Erro desconhecido'
+    });
+  }
+});
+
 // ============================================================================
 // INICIALIZAÇÃO DO SERVIDOR
 // ============================================================================
@@ -466,6 +507,7 @@ export const startServer = () => {
     console.log(`   👤 GET  /patients/:id`);
     console.log(`   📋 POST /patients/:id/assessments`);
     console.log(`   📋 GET  /patients/:id/assessments`);
-    console.log(`   📋 GET  /assessments/:id\n`);
+    console.log(`   📋 GET  /assessments/:id`);
+    console.log(`   📄 GET  /assessments/:id/report (PDF)\n`);
   });
 };
