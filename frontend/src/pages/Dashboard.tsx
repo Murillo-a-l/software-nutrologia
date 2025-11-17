@@ -158,6 +158,37 @@ export function Dashboard() {
             </Link>
           </div>
 
+        {/* Quick Actions */}
+        <div className="bg-card border border-border rounded-2xl shadow-sm p-6">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <p className="text-xs font-medium uppercase tracking-wide text-muted">Fluxo diário</p>
+              <h2 className="text-xl font-semibold text-gray-900">Ações rápidas</h2>
+              <p className="text-sm text-muted mt-1">Acelere o atendimento iniciando um novo cadastro ou navegando pela lista completa.</p>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <Link to="/patients/new" className="bg-accent text-white rounded-xl px-4 py-2 font-semibold shadow-sm hover:bg-sky-500 transition">
+                + Cadastrar novo paciente
+              </Link>
+              <Link to="/patients" className="bg-white text-primary border border-border rounded-xl px-4 py-2 hover:bg-gray-50 font-semibold">
+                Ver lista completa de pacientes
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        {/* Recent Patients */}
+        <div className="bg-card border border-border rounded-2xl shadow-sm p-6">
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <div>
+              <p className="text-xs font-medium uppercase tracking-wide text-muted">Últimos atendimentos</p>
+              <h2 className="text-xl font-semibold text-gray-900">Pacientes recentes</h2>
+            </div>
+            <Link to="/patients" className="text-sm font-semibold text-accent hover:text-sky-500">
+              Ver todos
+            </Link>
+          </div>
+
           {loading && (
             <div className="text-center py-8">
               <p className="text-sm text-muted">Carregando pacientes...</p>
