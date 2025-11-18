@@ -120,20 +120,42 @@ export function MetabolismPage() {
             <p className="text-xs text-[#7a838b]">Comparativo</p>
           </div>
         </div>
-      </div>
-    </Layout>
+        import {Layout} from '../../../components/Layout';
+
+        export function MetabolismPage() {
+  return (
+        <Layout>
+          <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
+            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Módulo</p>
+            <h1 className="text-3xl font-semibold text-slate-900">Metabolismo energético</h1>
+            <p className="text-sm text-slate-500 mt-2">
+              Configure cálculos automáticos para BMR (Mifflin, Cunningham), TDEE, idade metabólica e disponibilidade energética.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {["BMR", "TDEE", "EA"].map((label) => (
+              <div key={label} className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+                <p className="text-sm font-semibold text-slate-900">{label}</p>
+                <p className="text-xs text-slate-500 mt-1">Pronto para algoritmos personalizados.</p>
+              </div>
+            ))}
+          </div>
+        </Layout>
   );
 }
+<<<<<<< HEAD
 
-function average(assessments: Assessment[], getter: (assessment: Assessment) => number | undefined | null) {
-  const values = assessments
-    .map(getter)
-    .filter((value): value is number => typeof value === 'number' && !Number.isNaN(value));
-  if (!values.length) return null;
-  return values.reduce((sum, value) => sum + value, 0) / values.length;
-}
+  function average(assessments: Assessment[], getter: (assessment: Assessment) => number | undefined | null) {
+    const values = assessments
+      .map(getter)
+      .filter((value): value is number => typeof value === 'number' && !Number.isNaN(value));
+    if (!values.length) return null;
+    return values.reduce((sum, value) => sum + value, 0) / values.length;
+  }
 
-function parseAssessmentDate(value: string) {
-  const [day, month, year] = (value ?? '01/01/1970').split('/').map(Number);
-  return new Date(year || 0, (month || 1) - 1, day || 1).getTime();
-}
+  function parseAssessmentDate(value: string) {
+    const [day, month, year] = (value ?? '01/01/1970').split('/').map(Number);
+    return new Date(year || 0, (month || 1) - 1, day || 1).getTime();
+  }
+=======
+>>>>>>> 81426ffc81f07d7ec03d3ac1dcf64bb81f065e2c

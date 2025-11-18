@@ -9,17 +9,15 @@ import { AssessmentStepBasics } from '../components/assessment/AssessmentStepBas
 import { AssessmentStepAnthropometry } from '../components/assessment/AssessmentStepAnthropometry';
 import { AssessmentStepBioimpedance } from '../components/assessment/AssessmentStepBioimpedance';
 import { AssessmentStepSkinfolds } from '../components/assessment/AssessmentStepSkinfolds';
-import { AssessmentStepRisks } from '../components/assessment/AssessmentStepRisks';
 import { AssessmentStepReview } from '../components/assessment/AssessmentStepReview';
 import { AssessmentPreviewPanel } from '../components/assessment/AssessmentPreviewPanel';
 import type { AssessmentWizardFormData } from '../components/assessment/types';
 
 const wizardSteps = [
-  { title: 'Dados básicos', subtitle: 'Peso, altura e contexto' },
-  { title: 'Antropometria', subtitle: 'Perímetros clínicos' },
-  { title: 'Bioimpedância', subtitle: 'Módulo BIA', optional: true },
-  { title: 'Dobras cutâneas', subtitle: 'Protocolos JP3 / JP7', optional: true },
-  { title: 'Riscos e métricas', subtitle: 'Cálculos automáticos' },
+  { title: 'Dados', subtitle: 'Informações da avaliação' },
+  { title: 'Antropometria', subtitle: 'Medidas corporais' },
+  { title: 'Bioimpedância', subtitle: 'Dados do equipamento', optional: true },
+  { title: 'Dobras', subtitle: 'Jackson & Pollock', optional: true },
   { title: 'Revisão', subtitle: 'Resumo e envio' },
 ];
 
@@ -37,10 +35,6 @@ const initialFormState: AssessmentWizardFormData = {
   hipCm: '',
   neckCm: '',
   heightM: '',
-  chestCm: '',
-  thighCm: '',
-  armCm: '',
-  calfCm: '',
   ffmKg: '',
   skeletalMuscleKg: '',
   visceralFatIndex: '',
@@ -48,8 +42,6 @@ const initialFormState: AssessmentWizardFormData = {
   ecwL: '',
   icwL: '',
   phaseAngleDeg: '',
-  proteinMassKg: '',
-  mineralMassKg: '',
   tricepsMm: '',
   subscapularMm: '',
   suprailiacMm: '',
@@ -117,7 +109,7 @@ export function AssessmentForm() {
     const height = toNumber(formData.heightM) ?? patient?.heightM;
 
     if (currentStep === 0) {
-      return Boolean(formData.dateTime && weight && weight > 0 && height && height > 0);
+      return Boolean(formData.dateTime && weight && weight > 0);
     }
 
     if (currentStep === 1) {
@@ -152,10 +144,6 @@ export function AssessmentForm() {
         waistCm: toNumber(formData.waistCm),
         hipCm: toNumber(formData.hipCm),
         neckCm: toNumber(formData.neckCm),
-        chestCm: toNumber(formData.chestCm),
-        thighCm: toNumber(formData.thighCm),
-        armCm: toNumber(formData.armCm),
-        calfCm: toNumber(formData.calfCm),
         activityLevel: formData.activityLevel,
         ffmKg: toNumber(formData.ffmKg),
         skeletalMuscleKg: toNumber(formData.skeletalMuscleKg),
@@ -164,8 +152,6 @@ export function AssessmentForm() {
         ecwL: toNumber(formData.ecwL),
         icwL: toNumber(formData.icwL),
         phaseAngleDeg: toNumber(formData.phaseAngleDeg),
-        proteinMassKg: toNumber(formData.proteinMassKg),
-        mineralMassKg: toNumber(formData.mineralMassKg),
         tricepsMm: toNumber(formData.tricepsMm),
         subscapularMm: toNumber(formData.subscapularMm),
         suprailiacMm: toNumber(formData.suprailiacMm),
@@ -230,9 +216,6 @@ export function AssessmentForm() {
                   {currentStep === 2 && <AssessmentStepBioimpedance formData={formData} onChange={updateFormData} />}
                   {currentStep === 3 && <AssessmentStepSkinfolds formData={formData} onChange={updateFormData} />}
                   {currentStep === 4 && (
-                    <AssessmentStepRisks formData={formData} onChange={updateFormData} patient={patient} />
-                  )}
-                  {currentStep === 5 && (
                     <AssessmentStepReview formData={formData} onChange={updateFormData} patient={patient} />
                   )}
 
