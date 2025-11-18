@@ -18,6 +18,10 @@ export interface Assessment {
   waistCm?: number;
   hipCm?: number;
   neckCm?: number;
+  chestCm?: number;
+  thighCm?: number;
+  armCm?: number;
+  calfCm?: number;
   skeletalMuscleKg?: number;
   ffmKg?: number;
   visceralFatIndex?: number;
@@ -82,6 +86,10 @@ export interface CreateAssessmentData {
   waistCm?: number;
   hipCm?: number;
   neckCm?: number;
+  chestCm?: number;
+  thighCm?: number;
+  armCm?: number;
+  calfCm?: number;
   skeletalMuscleKg?: number;
   ffmKg?: number;
   visceralFatIndex?: number;
@@ -92,4 +100,6 @@ export interface CreateAssessmentData {
   activityLevel?: 'SEDENTARIO' | 'LEVE' | 'MODERADO' | 'INTENSO' | 'ATLETA';
   estimatedIntakeKcal?: number;
   exerciseEnergyExpenditureKcal?: number;
+  proteinMassKg?: number;
+  mineralMassKg?: number;
 }
