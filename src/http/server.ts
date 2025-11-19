@@ -1,5 +1,7 @@
 import express from 'express';
 import cors from 'cors';
+import * as fs from 'fs';
+import * as path from 'path';
 import { calculateMetrics } from '../calc/calculateMetrics.js';
 import type { AssessmentInput, PatientBasic } from '../domain/types.js';
 import * as patientService from '../services/patientService.js';
@@ -614,6 +616,73 @@ app.get('/patients/:id/clinical-intake', async (req, res) => {
 });
 
 // ============================================================================
+// ROTAS - CONFIGURAÇÕES
+// ============================================================================
+
+const CONFIG_DIR = path.join(process.cwd(), 'data');
+const ANAMNESIS_CONFIG_FILE = path.join(CONFIG_DIR, 'anamnesis-config.json');
+
+// Ensure config directory exists
+if (!fs.existsSync(CONFIG_DIR)) {
+  fs.mkdirSync(CONFIG_DIR, { recursive: true });
+}
+
+/**
+ * GET /settings/anamnesis-config - Buscar configuração da anamnese
+ */
+app.get('/settings/anamnesis-config', (req, res) => {
+  console.log('[GET /settings/anamnesis-config] Buscando configuração...');
+
+  try {
+    if (fs.existsSync(ANAMNESIS_CONFIG_FILE)) {
+      const configData = fs.readFileSync(ANAMNESIS_CONFIG_FILE, 'utf-8');
+      const config = JSON.parse(configData);
+      return res.json(config);
+    }
+
+    // Return 404 if no config exists (frontend will use defaults)
+    return res.status(404).json({ error: 'Configuração não encontrada' });
+
+  } catch (error) {
+    console.error('[GET /settings/anamnesis-config] Erro:', error);
+    return res.status(500).json({
+      error: 'Erro ao buscar configuração',
+      details: error instanceof Error ? error.message : 'Erro desconhecido'
+    });
+  }
+});
+
+/**
+ * POST /settings/anamnesis-config - Salvar configuração da anamnese
+ */
+app.post('/settings/anamnesis-config', (req, res) => {
+  console.log('[POST /settings/anamnesis-config] Salvando configuração...');
+
+  try {
+    const config = req.body;
+
+    // Validate config structure
+    if (!config.comorbidities || !config.familyHistory || !config.redsSymptoms || !config.treatmentGoals) {
+      return res.status(400).json({ error: 'Configuração inválida: faltam seções obrigatórias' });
+    }
+
+    // Save to file
+    fs.writeFileSync(ANAMNESIS_CONFIG_FILE, JSON.stringify(config, null, 2), 'utf-8');
+
+    console.log('[POST /settings/anamnesis-config] Configuração salva com sucesso');
+
+    return res.status(200).json(config);
+
+  } catch (error) {
+    console.error('[POST /settings/anamnesis-config] Erro:', error);
+    return res.status(500).json({
+      error: 'Erro ao salvar configuração',
+      details: error instanceof Error ? error.message : 'Erro desconhecido'
+    });
+  }
+});
+
+// ============================================================================
 // INICIALIZAÇÃO DO SERVIDOR
 // ============================================================================
 
@@ -631,6 +700,8 @@ export const startServer = () => {
     console.log(`   📋 GET  /assessments/:id`);
     console.log(`   📄 GET  /assessments/:id/report (PDF)`);
     console.log(`   🏥 POST /patients/:id/clinical-intake`);
-    console.log(`   🏥 GET  /patients/:id/clinical-intake\n`);
+    console.log(`   🏥 GET  /patients/:id/clinical-intake`);
+    console.log(`   ⚙️  GET  /settings/anamnesis-config`);
+    console.log(`   ⚙️  POST /settings/anamnesis-config\n`);
   });
 };
