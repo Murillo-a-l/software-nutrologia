@@ -1,4 +1,4 @@
-import type { Patient, Assessment, CreatePatientData, CreateAssessmentData, ClinicalIntake, CreateClinicalIntakeData } from '../types';
+import type { Patient, Assessment, CreatePatientData, CreateAssessmentData, ClinicalIntake, CreateClinicalIntakeData, AnamnesisConfig } from '../types';
 
 const API_BASE_URL = 'http://localhost:3000';
 
@@ -139,6 +139,24 @@ class ApiClient {
     return this.request<ClinicalIntake>(`/patients/${patientId}/clinical-intake`, {
       method: 'POST',
       body: JSON.stringify(data),
+    });
+  }
+
+  // ===== ANAMNESIS CONFIGURATION =====
+
+  async getAnamnesisConfig(): Promise<AnamnesisConfig | null> {
+    try {
+      return await this.request<AnamnesisConfig>('/settings/anamnesis-config');
+    } catch (error) {
+      // Return null if not found
+      return null;
+    }
+  }
+
+  async saveAnamnesisConfig(config: AnamnesisConfig): Promise<AnamnesisConfig> {
+    return this.request<AnamnesisConfig>('/settings/anamnesis-config', {
+      method: 'POST',
+      body: JSON.stringify(config),
     });
   }
 }

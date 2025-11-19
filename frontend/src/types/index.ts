@@ -199,3 +199,18 @@ export interface CreateClinicalIntakeData {
   currentSupplements?: string;
   notes?: string;
 }
+
+// Anamnesis configuration types
+export interface CheckboxOption {
+  id: string;
+  label: string;
+  fieldName: string;
+  enabled: boolean;
+}
+
+export interface AnamnesisConfig {
+  comorbidities: CheckboxOption[];
+  familyHistory: CheckboxOption[];
+  redsSymptoms: CheckboxOption[];
+  treatmentGoals: CheckboxOption[];
+}
