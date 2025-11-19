@@ -1,4 +1,4 @@
-import type { Patient, Assessment, CreatePatientData, CreateAssessmentData, ClinicalIntake, CreateClinicalIntakeData, AnamnesisConfig } from '../types';
+import type { Patient, Assessment, CreatePatientData, CreateAssessmentData, ClinicalIntake, CreateClinicalIntakeData, AnamnesisConfig, FormTemplate } from '../types';
 
 const API_BASE_URL = 'http://localhost:3000';
 
@@ -157,6 +157,38 @@ class ApiClient {
     return this.request<AnamnesisConfig>('/settings/anamnesis-config', {
       method: 'POST',
       body: JSON.stringify(config),
+    });
+  }
+
+  // ===== FORM TEMPLATES =====
+
+  async getFormTemplates(): Promise<FormTemplate[]> {
+    try {
+      return await this.request<FormTemplate[]>('/settings/form-templates');
+    } catch (error) {
+      // Return empty array if not found
+      return [];
+    }
+  }
+
+  async getFormTemplateById(id: string): Promise<FormTemplate | null> {
+    try {
+      return await this.request<FormTemplate>(`/settings/form-templates/${id}`);
+    } catch (error) {
+      return null;
+    }
+  }
+
+  async saveFormTemplate(template: FormTemplate): Promise<FormTemplate> {
+    return this.request<FormTemplate>('/settings/form-templates', {
+      method: 'POST',
+      body: JSON.stringify(template),
+    });
+  }
+
+  async deleteFormTemplate(id: string): Promise<void> {
+    return this.request<void>(`/settings/form-templates/${id}`, {
+      method: 'DELETE',
     });
   }
 }

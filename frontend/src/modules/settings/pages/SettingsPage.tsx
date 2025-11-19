@@ -25,11 +25,23 @@ export function SettingsPage() {
         <p className="mt-1 text-xs text-[#7a838b]">Configure os campos e opções dos formulários clínicos.</p>
         <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
           <Link
+            to="/settings/form-builder"
+            className="flex items-center justify-between rounded-xl border border-[#e2e0db] bg-white p-4 hover:border-[#35d0a0] hover:bg-[#f8faf9] transition"
+          >
+            <div>
+              <p className="text-sm font-semibold text-[#0c2332]">Editor de Formulários</p>
+              <p className="text-xs text-[#7a838b] mt-0.5">Crie e personalize templates de anamnese</p>
+            </div>
+            <svg className="h-5 w-5 text-[#7a838b]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </Link>
+          <Link
             to="/settings/anamnesis"
             className="flex items-center justify-between rounded-xl border border-[#e2e0db] bg-white p-4 hover:border-[#35d0a0] hover:bg-[#f8faf9] transition"
           >
             <div>
-              <p className="text-sm font-semibold text-[#0c2332]">Anamnese</p>
+              <p className="text-sm font-semibold text-[#0c2332]">Configuração Rápida</p>
               <p className="text-xs text-[#7a838b] mt-0.5">Comorbidades, antecedentes, objetivos</p>
             </div>
             <svg className="h-5 w-5 text-[#7a838b]" fill="none" viewBox="0 0 24 24" stroke="currentColor">

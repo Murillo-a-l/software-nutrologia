@@ -214,3 +214,63 @@ export interface AnamnesisConfig {
   redsSymptoms: CheckboxOption[];
   treatmentGoals: CheckboxOption[];
 }
+
+// Form Builder Types
+export type FieldType =
+  | 'text'           // Input de texto curto
+  | 'textarea'       // Texto longo
+  | 'number'         // Número com unidade opcional
+  | 'select'         // Dropdown de seleção
+  | 'checkbox_group' // Grupo de checkboxes
+  | 'boolean'        // Sim/Não simples
+  | 'boolean_conditional' // Sim/Não com campo condicional
+  | 'vitals_group'   // Grupo de sinais vitais (PA, FC, etc.)
+  | 'tags_input';    // Input com tags dinâmicas
+
+export interface SelectOption {
+  value: string;
+  label: string;
+}
+
+export interface FormField {
+  id: string;
+  type: FieldType;
+  label: string;
+  placeholder?: string;
+  defaultValue?: string | boolean | string[];
+  required?: boolean;
+  // Para campos de número
+  unit?: string;
+  min?: number;
+  max?: number;
+  step?: number;
+  // Para select e checkbox_group
+  options?: SelectOption[];
+  // Para boolean_conditional
+  conditionalLabel?: string; // Label do campo que aparece quando "Sim"
+  conditionalPlaceholder?: string;
+  // Para textarea
+  rows?: number;
+  // Metadados
+  width?: 'full' | 'half' | 'third'; // Largura do campo
+}
+
+export interface FormSection {
+  id: string;
+  title: string;
+  description?: string;
+  fields: FormField[];
+  collapsible?: boolean;
+  defaultCollapsed?: boolean;
+}
+
+export interface FormTemplate {
+  id: string;
+  name: string;
+  description?: string;
+  sections: FormSection[];
+  createdAt?: string;
+  updatedAt?: string;
+  isDefault?: boolean;
+}
+

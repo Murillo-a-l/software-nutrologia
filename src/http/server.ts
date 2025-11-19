@@ -621,6 +621,7 @@ app.get('/patients/:id/clinical-intake', async (req, res) => {
 
 const CONFIG_DIR = path.join(process.cwd(), 'data');
 const ANAMNESIS_CONFIG_FILE = path.join(CONFIG_DIR, 'anamnesis-config.json');
+const FORM_TEMPLATES_FILE = path.join(CONFIG_DIR, 'form-templates.json');
 
 // Ensure config directory exists
 if (!fs.existsSync(CONFIG_DIR)) {
@@ -682,6 +683,153 @@ app.post('/settings/anamnesis-config', (req, res) => {
   }
 });
 
+/**
+ * GET /settings/form-templates - Buscar todos os templates de formulário
+ */
+app.get('/settings/form-templates', (req, res) => {
+  console.log('[GET /settings/form-templates] Buscando templates...');
+
+  try {
+    if (fs.existsSync(FORM_TEMPLATES_FILE)) {
+      const templatesData = fs.readFileSync(FORM_TEMPLATES_FILE, 'utf-8');
+      const templates = JSON.parse(templatesData);
+      return res.json(templates);
+    }
+
+    // Return empty array if no templates exist
+    return res.json([]);
+
+  } catch (error) {
+    console.error('[GET /settings/form-templates] Erro:', error);
+    return res.status(500).json({
+      error: 'Erro ao buscar templates',
+      details: error instanceof Error ? error.message : 'Erro desconhecido'
+    });
+  }
+});
+
+/**
+ * GET /settings/form-templates/:id - Buscar template específico por ID
+ */
+app.get('/settings/form-templates/:id', (req, res) => {
+  console.log('[GET /settings/form-templates/:id] Buscando template:', req.params.id);
+
+  try {
+    if (!fs.existsSync(FORM_TEMPLATES_FILE)) {
+      return res.status(404).json({ error: 'Template não encontrado' });
+    }
+
+    const templatesData = fs.readFileSync(FORM_TEMPLATES_FILE, 'utf-8');
+    const templates = JSON.parse(templatesData);
+    const template = templates.find((t: any) => t.id === req.params.id);
+
+    if (!template) {
+      return res.status(404).json({ error: 'Template não encontrado' });
+    }
+
+    return res.json(template);
+
+  } catch (error) {
+    console.error('[GET /settings/form-templates/:id] Erro:', error);
+    return res.status(500).json({
+      error: 'Erro ao buscar template',
+      details: error instanceof Error ? error.message : 'Erro desconhecido'
+    });
+  }
+});
+
+/**
+ * POST /settings/form-templates - Salvar ou atualizar template de formulário
+ */
+app.post('/settings/form-templates', (req, res) => {
+  console.log('[POST /settings/form-templates] Salvando template...');
+
+  try {
+    const template = req.body;
+
+    // Validate template structure
+    if (!template.id || !template.name || !template.sections) {
+      return res.status(400).json({ error: 'Template inválido: faltam campos obrigatórios (id, name, sections)' });
+    }
+
+    // Load existing templates
+    let templates: any[] = [];
+    if (fs.existsSync(FORM_TEMPLATES_FILE)) {
+      const templatesData = fs.readFileSync(FORM_TEMPLATES_FILE, 'utf-8');
+      templates = JSON.parse(templatesData);
+    }
+
+    // Check if template already exists
+    const existingIndex = templates.findIndex((t: any) => t.id === template.id);
+
+    if (existingIndex >= 0) {
+      // Update existing template
+      templates[existingIndex] = {
+        ...template,
+        updatedAt: new Date().toISOString(),
+      };
+      console.log('[POST /settings/form-templates] Template atualizado:', template.id);
+    } else {
+      // Add new template
+      templates.push({
+        ...template,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+      console.log('[POST /settings/form-templates] Novo template criado:', template.id);
+    }
+
+    // Save to file
+    fs.writeFileSync(FORM_TEMPLATES_FILE, JSON.stringify(templates, null, 2), 'utf-8');
+
+    return res.status(200).json(templates[existingIndex >= 0 ? existingIndex : templates.length - 1]);
+
+  } catch (error) {
+    console.error('[POST /settings/form-templates] Erro:', error);
+    return res.status(500).json({
+      error: 'Erro ao salvar template',
+      details: error instanceof Error ? error.message : 'Erro desconhecido'
+    });
+  }
+});
+
+/**
+ * DELETE /settings/form-templates/:id - Deletar template de formulário
+ */
+app.delete('/settings/form-templates/:id', (req, res) => {
+  console.log('[DELETE /settings/form-templates/:id] Deletando template:', req.params.id);
+
+  try {
+    if (!fs.existsSync(FORM_TEMPLATES_FILE)) {
+      return res.status(404).json({ error: 'Template não encontrado' });
+    }
+
+    const templatesData = fs.readFileSync(FORM_TEMPLATES_FILE, 'utf-8');
+    let templates = JSON.parse(templatesData);
+
+    const initialLength = templates.length;
+    templates = templates.filter((t: any) => t.id !== req.params.id);
+
+    if (templates.length === initialLength) {
+      return res.status(404).json({ error: 'Template não encontrado' });
+    }
+
+    // Save updated templates
+    fs.writeFileSync(FORM_TEMPLATES_FILE, JSON.stringify(templates, null, 2), 'utf-8');
+
+    console.log('[DELETE /settings/form-templates/:id] Template deletado:', req.params.id);
+
+    return res.status(204).send();
+
+  } catch (error) {
+    console.error('[DELETE /settings/form-templates/:id] Erro:', error);
+    return res.status(500).json({
+      error: 'Erro ao deletar template',
+      details: error instanceof Error ? error.message : 'Erro desconhecido'
+    });
+  }
+});
+
 // ============================================================================
 // INICIALIZAÇÃO DO SERVIDOR
 // ============================================================================
@@ -702,6 +850,10 @@ export const startServer = () => {
     console.log(`   🏥 POST /patients/:id/clinical-intake`);
     console.log(`   🏥 GET  /patients/:id/clinical-intake`);
     console.log(`   ⚙️  GET  /settings/anamnesis-config`);
-    console.log(`   ⚙️  POST /settings/anamnesis-config\n`);
+    console.log(`   ⚙️  POST /settings/anamnesis-config`);
+    console.log(`   📝 GET  /settings/form-templates`);
+    console.log(`   📝 GET  /settings/form-templates/:id`);
+    console.log(`   📝 POST /settings/form-templates`);
+    console.log(`   📝 DELETE /settings/form-templates/:id\n`);
   });
 };
