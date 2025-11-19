@@ -18,6 +18,7 @@ import { AiAssistantPage } from './modules/ai/pages/AiAssistantPage';
 import { PersonalCenterPage } from './modules/personal/pages/PersonalCenterPage';
 import { SettingsPage } from './modules/settings/pages/SettingsPage';
 import { AnamnesisSettingsPage } from './modules/settings/pages/AnamnesisSettingsPage';
+import { FormBuilderPage } from './modules/settings/pages/FormBuilderPage';
 import { AnamnesisPage } from './modules/clinical/pages/AnamnesisPage';
 import { ClinicalExamsPage } from './modules/clinical/pages/ClinicalExamsPage';
 import { DiagnosticsPage } from './modules/clinical/pages/DiagnosticsPage';
@@ -56,6 +57,7 @@ function App() {
           <Route path="/personal" element={<PersonalCenterPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/settings/anamnesis" element={<AnamnesisSettingsPage />} />
+          <Route path="/settings/form-builder" element={<FormBuilderPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
