@@ -11,14 +11,71 @@ datasource db {
 }
 
 model Patient {
-  id          String       @id @default(cuid())
-  name        String
-  sex         String
-  birthDate   DateTime
-  heightM     Float
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  assessments Assessment[]
+  id             String          @id @default(cuid())
+  name           String
+  sex            String
+  birthDate      DateTime
+  heightM        Float
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  assessments    Assessment[]
+  clinicalIntake ClinicalIntake?
+}
+
+model ClinicalIntake {
+  id                    String   @id @default(cuid())
+  patientId             String   @unique
+  patient               Patient  @relation(fields: [patientId], references: [id])
+
+  // Main complaint and goals
+  mainComplaint         String?
+  goals                 String?  // JSON array: ["emagrecimento", "hipertrofia", "performance", "longevidade", "saude_geral"]
+
+  // Comorbidities (boolean flags)
+  hasHypertension       Boolean  @default(false)
+  hasDiabetes           Boolean  @default(false)
+  hasPrediabetes        Boolean  @default(false)
+  hasDyslipidemia       Boolean  @default(false)
+  hasSteatosis          Boolean  @default(false)
+  hasThyroidDisorder    Boolean  @default(false)
+  otherComorbidities    String?
+
+  // Family history
+  familyHistoryCV       Boolean  @default(false)  // IAM/AVC precoce
+  familyHistoryDM       Boolean  @default(false)
+  familyHistoryObesity  Boolean  @default(false)
+  familyHistoryNotes    String?
+
+  // Lifestyle habits
+  sleepHoursAvg         Float?
+  sleepQuality          String?  // "ruim", "regular", "boa", "excelente"
+  isSmoker              Boolean  @default(false)
+  smokingDetails        String?
+  alcoholFrequency      String?  // "nunca", "raramente", "social", "frequente", "diario"
+  physicalActivityLevel String?  // "sedentario", "leve", "moderado", "intenso", "atleta"
+  physicalActivityType  String?
+  ultraProcessedFreq    String?  // "nunca", "raramente", "semanal", "diario"
+  waterIntakeLiters     Float?
+
+  // Relevant symptoms (for RED-S and other risks)
+  hasFatigue            Boolean  @default(false)
+  hasPerformanceDrop    Boolean  @default(false)
+  hasAmenorrhea         Boolean  @default(false)
+  hasStressFractures    Boolean  @default(false)
+  hasFrequentInfections Boolean  @default(false)
+  hasDigestiveIssues    Boolean  @default(false)
+  hasMoodChanges        Boolean  @default(false)
+  otherSymptoms         String?
+
+  // Medications and supplements
+  currentMedications    String?
+  currentSupplements    String?
+
+  // Additional notes
+  notes                 String?
+
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
 }
 
 model Assessment {

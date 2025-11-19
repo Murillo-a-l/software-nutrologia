@@ -1,4 +1,4 @@
-import type { Patient, Assessment, CreatePatientData, CreateAssessmentData } from '../types';
+import type { Patient, Assessment, CreatePatientData, CreateAssessmentData, ClinicalIntake, CreateClinicalIntakeData } from '../types';
 
 const API_BASE_URL = 'http://localhost:3000';
 
@@ -116,6 +116,30 @@ class ApiClient {
       }
       throw new Error('Erro desconhecido ao baixar relatório');
     }
+  }
+
+  // ===== CLINICAL INTAKE (ANAMNESE) =====
+
+  async getClinicalIntake(patientId: string): Promise<ClinicalIntake | null> {
+    try {
+      return await this.request<ClinicalIntake>(`/patients/${patientId}/clinical-intake`);
+    } catch (error) {
+      // Return null if not found (404)
+      if (error instanceof Error && error.message.includes('não encontrada')) {
+        return null;
+      }
+      throw error;
+    }
+  }
+
+  async saveClinicalIntake(
+    patientId: string,
+    data: CreateClinicalIntakeData
+  ): Promise<ClinicalIntake> {
+    return this.request<ClinicalIntake>(`/patients/${patientId}/clinical-intake`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
   }
 }
 

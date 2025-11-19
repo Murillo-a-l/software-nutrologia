@@ -4,6 +4,7 @@ import { calculateMetrics } from '../calc/calculateMetrics.js';
 import type { AssessmentInput, PatientBasic } from '../domain/types.js';
 import * as patientService from '../services/patientService.js';
 import * as assessmentService from '../services/assessmentService.js';
+import * as clinicalIntakeService from '../services/clinicalIntakeService.js';
 import { generateAssessmentReportPdf } from '../reports/assessmentReport.js';
 
 const app = express();
@@ -520,6 +521,99 @@ app.get('/assessments/:id/report', async (req, res) => {
 });
 
 // ============================================================================
+// ROTAS - ANAMNESE CLÍNICA
+// ============================================================================
+
+/**
+ * POST /patients/:id/clinical-intake - Criar ou atualizar anamnese clínica
+ */
+app.post('/patients/:id/clinical-intake', async (req, res) => {
+  console.log('[POST /patients/:id/clinical-intake] Salvando anamnese para paciente:', req.params.id);
+
+  try {
+    const patientId = req.params.id;
+    const data = req.body;
+
+    // Verifica se paciente existe
+    const patient = await patientService.getPatientById(patientId);
+    if (!patient) {
+      return res.status(404).json({ error: 'Paciente não encontrado' });
+    }
+
+    const intake = await clinicalIntakeService.createOrUpdateClinicalIntake(patientId, {
+      mainComplaint: data.mainComplaint,
+      goals: data.goals,
+      hasHypertension: data.hasHypertension,
+      hasDiabetes: data.hasDiabetes,
+      hasPrediabetes: data.hasPrediabetes,
+      hasDyslipidemia: data.hasDyslipidemia,
+      hasSteatosis: data.hasSteatosis,
+      hasThyroidDisorder: data.hasThyroidDisorder,
+      otherComorbidities: data.otherComorbidities,
+      familyHistoryCV: data.familyHistoryCV,
+      familyHistoryDM: data.familyHistoryDM,
+      familyHistoryObesity: data.familyHistoryObesity,
+      familyHistoryNotes: data.familyHistoryNotes,
+      sleepHoursAvg: data.sleepHoursAvg,
+      sleepQuality: data.sleepQuality,
+      isSmoker: data.isSmoker,
+      smokingDetails: data.smokingDetails,
+      alcoholFrequency: data.alcoholFrequency,
+      physicalActivityLevel: data.physicalActivityLevel,
+      physicalActivityType: data.physicalActivityType,
+      ultraProcessedFreq: data.ultraProcessedFreq,
+      waterIntakeLiters: data.waterIntakeLiters,
+      hasFatigue: data.hasFatigue,
+      hasPerformanceDrop: data.hasPerformanceDrop,
+      hasAmenorrhea: data.hasAmenorrhea,
+      hasStressFractures: data.hasStressFractures,
+      hasFrequentInfections: data.hasFrequentInfections,
+      hasDigestiveIssues: data.hasDigestiveIssues,
+      hasMoodChanges: data.hasMoodChanges,
+      otherSymptoms: data.otherSymptoms,
+      currentMedications: data.currentMedications,
+      currentSupplements: data.currentSupplements,
+      notes: data.notes,
+    });
+
+    console.log('[POST /patients/:id/clinical-intake] Anamnese salva:', intake.id);
+
+    return res.status(201).json(intake);
+
+  } catch (error) {
+    console.error('[POST /patients/:id/clinical-intake] Erro:', error);
+    return res.status(500).json({
+      error: 'Erro ao salvar anamnese',
+      details: error instanceof Error ? error.message : 'Erro desconhecido'
+    });
+  }
+});
+
+/**
+ * GET /patients/:id/clinical-intake - Buscar anamnese clínica de um paciente
+ */
+app.get('/patients/:id/clinical-intake', async (req, res) => {
+  console.log('[GET /patients/:id/clinical-intake] Buscando anamnese do paciente:', req.params.id);
+
+  try {
+    const intake = await clinicalIntakeService.getClinicalIntakeByPatientId(req.params.id);
+
+    if (!intake) {
+      return res.status(404).json({ error: 'Anamnese não encontrada para este paciente' });
+    }
+
+    return res.json(intake);
+
+  } catch (error) {
+    console.error('[GET /patients/:id/clinical-intake] Erro:', error);
+    return res.status(500).json({
+      error: 'Erro ao buscar anamnese',
+      details: error instanceof Error ? error.message : 'Erro desconhecido'
+    });
+  }
+});
+
+// ============================================================================
 // INICIALIZAÇÃO DO SERVIDOR
 // ============================================================================
 
@@ -535,6 +629,8 @@ export const startServer = () => {
     console.log(`   📋 POST /patients/:id/assessments`);
     console.log(`   📋 GET  /patients/:id/assessments`);
     console.log(`   📋 GET  /assessments/:id`);
-    console.log(`   📄 GET  /assessments/:id/report (PDF)\n`);
+    console.log(`   📄 GET  /assessments/:id/report (PDF)`);
+    console.log(`   🏥 POST /patients/:id/clinical-intake`);
+    console.log(`   🏥 GET  /patients/:id/clinical-intake\n`);
   });
 };
