@@ -21,3 +21,6 @@ Thumbs.db
 .cache/
 .next/
 out/
+
+# Ignorar arquivos de desenvolvimento local
+prisma/dev.db
