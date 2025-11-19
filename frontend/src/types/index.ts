@@ -112,3 +112,90 @@ export interface CreateAssessmentData {
   skinfoldProtocol?: string;
   skinfoldNotes?: string;
 }
+
+export interface ClinicalIntake {
+  id: string;
+  patientId: string;
+  mainComplaint?: string;
+  goals?: string[];
+
+  // Comorbidities
+  hasHypertension: boolean;
+  hasDiabetes: boolean;
+  hasPrediabetes: boolean;
+  hasDyslipidemia: boolean;
+  hasSteatosis: boolean;
+  hasThyroidDisorder: boolean;
+  otherComorbidities?: string;
+
+  // Family history
+  familyHistoryCV: boolean;
+  familyHistoryDM: boolean;
+  familyHistoryObesity: boolean;
+  familyHistoryNotes?: string;
+
+  // Lifestyle
+  sleepHoursAvg?: number;
+  sleepQuality?: string;
+  isSmoker: boolean;
+  smokingDetails?: string;
+  alcoholFrequency?: string;
+  physicalActivityLevel?: string;
+  physicalActivityType?: string;
+  ultraProcessedFreq?: string;
+  waterIntakeLiters?: number;
+
+  // Symptoms
+  hasFatigue: boolean;
+  hasPerformanceDrop: boolean;
+  hasAmenorrhea: boolean;
+  hasStressFractures: boolean;
+  hasFrequentInfections: boolean;
+  hasDigestiveIssues: boolean;
+  hasMoodChanges: boolean;
+  otherSymptoms?: string;
+
+  // Medications
+  currentMedications?: string;
+  currentSupplements?: string;
+
+  notes?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface CreateClinicalIntakeData {
+  mainComplaint?: string;
+  goals?: string[];
+  hasHypertension?: boolean;
+  hasDiabetes?: boolean;
+  hasPrediabetes?: boolean;
+  hasDyslipidemia?: boolean;
+  hasSteatosis?: boolean;
+  hasThyroidDisorder?: boolean;
+  otherComorbidities?: string;
+  familyHistoryCV?: boolean;
+  familyHistoryDM?: boolean;
+  familyHistoryObesity?: boolean;
+  familyHistoryNotes?: string;
+  sleepHoursAvg?: number;
+  sleepQuality?: string;
+  isSmoker?: boolean;
+  smokingDetails?: string;
+  alcoholFrequency?: string;
+  physicalActivityLevel?: string;
+  physicalActivityType?: string;
+  ultraProcessedFreq?: string;
+  waterIntakeLiters?: number;
+  hasFatigue?: boolean;
+  hasPerformanceDrop?: boolean;
+  hasAmenorrhea?: boolean;
+  hasStressFractures?: boolean;
+  hasFrequentInfections?: boolean;
+  hasDigestiveIssues?: boolean;
+  hasMoodChanges?: boolean;
+  otherSymptoms?: string;
+  currentMedications?: string;
+  currentSupplements?: string;
+  notes?: string;
+}
