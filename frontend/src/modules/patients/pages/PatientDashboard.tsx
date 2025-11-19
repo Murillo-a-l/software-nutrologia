@@ -49,7 +49,7 @@ export function PatientDashboard() {
 
   const weightTrend = sortedAssessments.map((assessment) => ({ label: assessment.dateTime, value: assessment.weightKg ?? null }));
   const fatTrend = sortedAssessments.map((assessment) => ({ label: assessment.dateTime, value: assessment.bfPercent ?? null }));
-  const leanTrend = sortedAssessments.map((assessment) => ({ label: assessment.metrics?.leanMassKg ?? assessment.ffmKg ?? null }));
+  const leanTrend = sortedAssessments.map((assessment) => ({ label: assessment.dateTime, value: assessment.metrics?.leanMassKg ?? assessment.ffmKg ?? null }));
   const waistTrend = sortedAssessments.map((assessment) => ({ label: assessment.dateTime, value: assessment.waistCm ?? null }));
 
   const height = patient?.heightM ?? null;

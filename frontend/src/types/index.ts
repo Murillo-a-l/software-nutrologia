@@ -102,4 +102,13 @@ export interface CreateAssessmentData {
   exerciseEnergyExpenditureKcal?: number;
   proteinMassKg?: number;
   mineralMassKg?: number;
+  tricepsMm?: number;
+  subscapularMm?: number;
+  suprailiacMm?: number;
+  abdominalMm?: number;
+  thighMm?: number;
+  chestMm?: number;
+  midaxillaryMm?: number;
+  skinfoldProtocol?: string;
+  skinfoldNotes?: string;
 }

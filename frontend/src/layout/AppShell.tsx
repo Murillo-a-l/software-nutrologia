@@ -1,3 +1,4 @@
+import type { ReactElement } from 'react';
 import { useMemo, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -25,7 +26,7 @@ import {
   FlaskConical,
   ClipboardCheck,
   UserRound,
-} from 'lucide-react';
+} from '../vendor/lucide-react';
 
 interface AppShellProps {
   children?: React.ReactNode;
@@ -34,7 +35,7 @@ interface AppShellProps {
 interface NavItem {
   label: string;
   to: string;
-  icon: (props: { className?: string }) => JSX.Element;
+  icon: (props: { className?: string }) => ReactElement;
 }
 
 interface NavSection {
