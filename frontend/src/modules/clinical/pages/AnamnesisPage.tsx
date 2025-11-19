@@ -2,15 +2,40 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Layout } from '../../../components/Layout';
 import { apiClient } from '../../../api/client';
-import type { Patient, CreateClinicalIntakeData } from '../../../types';
+import type { Patient, CreateClinicalIntakeData, AnamnesisConfig } from '../../../types';
 
-const GOALS_OPTIONS = [
-  { value: 'emagrecimento', label: 'Emagrecimento' },
-  { value: 'hipertrofia', label: 'Hipertrofia' },
-  { value: 'performance', label: 'Performance esportiva' },
-  { value: 'longevidade', label: 'Longevidade' },
-  { value: 'saude_geral', label: 'Saúde geral' },
-];
+// Default configuration (used if no saved config)
+const defaultConfig: AnamnesisConfig = {
+  comorbidities: [
+    { id: 'has-1', label: 'HAS', fieldName: 'hasHypertension', enabled: true },
+    { id: 'dm2-1', label: 'DM2', fieldName: 'hasDiabetes', enabled: true },
+    { id: 'predm-1', label: 'Pré-DM', fieldName: 'hasPrediabetes', enabled: true },
+    { id: 'dyslip-1', label: 'Dislipidemia', fieldName: 'hasDyslipidemia', enabled: true },
+    { id: 'steat-1', label: 'Esteatose', fieldName: 'hasSteatosis', enabled: true },
+    { id: 'thyroid-1', label: 'Tireoide', fieldName: 'hasThyroidDisorder', enabled: true },
+  ],
+  familyHistory: [
+    { id: 'fh-cv-1', label: 'DCV precoce', fieldName: 'familyHistoryCV', enabled: true },
+    { id: 'fh-dm-1', label: 'DM', fieldName: 'familyHistoryDM', enabled: true },
+    { id: 'fh-ob-1', label: 'Obesidade', fieldName: 'familyHistoryObesity', enabled: true },
+  ],
+  redsSymptoms: [
+    { id: 'reds-fatigue', label: 'Fadiga', fieldName: 'hasFatigue', enabled: true },
+    { id: 'reds-perf', label: 'Queda performance', fieldName: 'hasPerformanceDrop', enabled: true },
+    { id: 'reds-amen', label: 'Amenorreia', fieldName: 'hasAmenorrhea', enabled: true },
+    { id: 'reds-frat', label: 'Fraturas estresse', fieldName: 'hasStressFractures', enabled: true },
+    { id: 'reds-infec', label: 'Infecções freq.', fieldName: 'hasFrequentInfections', enabled: true },
+    { id: 'reds-tgi', label: 'TGI', fieldName: 'hasDigestiveIssues', enabled: true },
+    { id: 'reds-humor', label: 'Humor', fieldName: 'hasMoodChanges', enabled: true },
+  ],
+  treatmentGoals: [
+    { id: 'goal-emag', label: 'Emagrecimento', fieldName: 'emagrecimento', enabled: true },
+    { id: 'goal-hiper', label: 'Hipertrofia', fieldName: 'hipertrofia', enabled: true },
+    { id: 'goal-perf', label: 'Performance esportiva', fieldName: 'performance', enabled: true },
+    { id: 'goal-long', label: 'Longevidade', fieldName: 'longevidade', enabled: true },
+    { id: 'goal-saude', label: 'Saúde geral', fieldName: 'saude_geral', enabled: true },
+  ],
+};
 
 const SLEEP_QUALITY_OPTIONS = [
   { value: 'ruim', label: 'Ruim' },
@@ -122,6 +147,12 @@ export function AnamnesisPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
+  // Configuration for dynamic checkboxes
+  const [config, setConfig] = useState<AnamnesisConfig>(defaultConfig);
+
+  // Dynamic checkbox values (for custom fields)
+  const [dynamicCheckboxes, setDynamicCheckboxes] = useState<Record<string, boolean>>({});
+
   // Dynamic list items for family history
   const [familyHistoryItems, setFamilyHistoryItems] = useState<string[]>([]);
   const [newFamilyItem, setNewFamilyItem] = useState('');
@@ -140,7 +171,37 @@ export function AnamnesisPage() {
 
   useEffect(() => {
     loadPatients();
+    loadConfig();
   }, []);
+
+  const loadConfig = async () => {
+    try {
+      const savedConfig = await apiClient.getAnamnesisConfig();
+      if (savedConfig) {
+        setConfig(savedConfig);
+      }
+    } catch (err) {
+      // Use default config
+      console.log('Using default anamnesis config');
+    }
+  };
+
+  // Helper to get checkbox value (from formData for standard fields, from dynamicCheckboxes for custom)
+  const getCheckboxValue = (fieldName: string): boolean => {
+    if (fieldName in formData) {
+      return (formData as Record<string, unknown>)[fieldName] as boolean || false;
+    }
+    return dynamicCheckboxes[fieldName] || false;
+  };
+
+  // Helper to set checkbox value
+  const setCheckboxValue = (fieldName: string, value: boolean) => {
+    if (fieldName in formData) {
+      setFormData({ ...formData, [fieldName]: value });
+    } else {
+      setDynamicCheckboxes({ ...dynamicCheckboxes, [fieldName]: value });
+    }
+  };
 
   useEffect(() => {
     if (selectedPatientId) {
@@ -408,36 +469,14 @@ export function AnamnesisPage() {
           <div className="rounded-2xl border border-[#e2e0db] bg-white/90 p-5 shadow-sm">
             <h2 className="text-lg font-semibold text-[#0c2332]">Antecedentes Pessoais - Comorbidades</h2>
             <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-3">
-              <CheckboxField
-                label="HAS"
-                checked={formData.hasHypertension || false}
-                onChange={(checked) => setFormData({ ...formData, hasHypertension: checked })}
-              />
-              <CheckboxField
-                label="DM2"
-                checked={formData.hasDiabetes || false}
-                onChange={(checked) => setFormData({ ...formData, hasDiabetes: checked })}
-              />
-              <CheckboxField
-                label="Pré-DM"
-                checked={formData.hasPrediabetes || false}
-                onChange={(checked) => setFormData({ ...formData, hasPrediabetes: checked })}
-              />
-              <CheckboxField
-                label="Dislipidemia"
-                checked={formData.hasDyslipidemia || false}
-                onChange={(checked) => setFormData({ ...formData, hasDyslipidemia: checked })}
-              />
-              <CheckboxField
-                label="Esteatose"
-                checked={formData.hasSteatosis || false}
-                onChange={(checked) => setFormData({ ...formData, hasSteatosis: checked })}
-              />
-              <CheckboxField
-                label="Tireoide"
-                checked={formData.hasThyroidDisorder || false}
-                onChange={(checked) => setFormData({ ...formData, hasThyroidDisorder: checked })}
-              />
+              {config.comorbidities.filter(c => c.enabled).map((option) => (
+                <CheckboxField
+                  key={option.id}
+                  label={option.label}
+                  checked={getCheckboxValue(option.fieldName)}
+                  onChange={(checked) => setCheckboxValue(option.fieldName, checked)}
+                />
+              ))}
             </div>
 
             {/* Dynamic comorbidity list */}
@@ -483,21 +522,14 @@ export function AnamnesisPage() {
           <div className="rounded-2xl border border-[#e2e0db] bg-white/90 p-5 shadow-sm">
             <h2 className="text-lg font-semibold text-[#0c2332]">Antecedentes Familiares</h2>
             <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
-              <CheckboxField
-                label="DCV precoce"
-                checked={formData.familyHistoryCV || false}
-                onChange={(checked) => setFormData({ ...formData, familyHistoryCV: checked })}
-              />
-              <CheckboxField
-                label="DM"
-                checked={formData.familyHistoryDM || false}
-                onChange={(checked) => setFormData({ ...formData, familyHistoryDM: checked })}
-              />
-              <CheckboxField
-                label="Obesidade"
-                checked={formData.familyHistoryObesity || false}
-                onChange={(checked) => setFormData({ ...formData, familyHistoryObesity: checked })}
-              />
+              {config.familyHistory.filter(c => c.enabled).map((option) => (
+                <CheckboxField
+                  key={option.id}
+                  label={option.label}
+                  checked={getCheckboxValue(option.fieldName)}
+                  onChange={(checked) => setCheckboxValue(option.fieldName, checked)}
+                />
+              ))}
             </div>
 
             {/* Dynamic family history list */}
@@ -729,41 +761,14 @@ MMII: ..."
           <div className="rounded-2xl border border-[#e2e0db] bg-white/90 p-5 shadow-sm">
             <h2 className="text-lg font-semibold text-[#0c2332]">Sintomas relevantes (RED-S / Performance)</h2>
             <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
-              <CheckboxField
-                label="Fadiga"
-                checked={formData.hasFatigue || false}
-                onChange={(checked) => setFormData({ ...formData, hasFatigue: checked })}
-              />
-              <CheckboxField
-                label="Queda performance"
-                checked={formData.hasPerformanceDrop || false}
-                onChange={(checked) => setFormData({ ...formData, hasPerformanceDrop: checked })}
-              />
-              <CheckboxField
-                label="Amenorreia"
-                checked={formData.hasAmenorrhea || false}
-                onChange={(checked) => setFormData({ ...formData, hasAmenorrhea: checked })}
-              />
-              <CheckboxField
-                label="Fraturas estresse"
-                checked={formData.hasStressFractures || false}
-                onChange={(checked) => setFormData({ ...formData, hasStressFractures: checked })}
-              />
-              <CheckboxField
-                label="Infecções freq."
-                checked={formData.hasFrequentInfections || false}
-                onChange={(checked) => setFormData({ ...formData, hasFrequentInfections: checked })}
-              />
-              <CheckboxField
-                label="TGI"
-                checked={formData.hasDigestiveIssues || false}
-                onChange={(checked) => setFormData({ ...formData, hasDigestiveIssues: checked })}
-              />
-              <CheckboxField
-                label="Humor"
-                checked={formData.hasMoodChanges || false}
-                onChange={(checked) => setFormData({ ...formData, hasMoodChanges: checked })}
-              />
+              {config.redsSymptoms.filter(c => c.enabled).map((option) => (
+                <CheckboxField
+                  key={option.id}
+                  label={option.label}
+                  checked={getCheckboxValue(option.fieldName)}
+                  onChange={(checked) => setCheckboxValue(option.fieldName, checked)}
+                />
+              ))}
             </div>
 
             {/* Dynamic symptom list */}
@@ -833,13 +838,13 @@ MMII: ..."
           <div className="rounded-2xl border border-[#e2e0db] bg-white/90 p-5 shadow-sm">
             <h2 className="text-lg font-semibold text-[#0c2332]">Objetivos do Tratamento</h2>
             <div className="mt-3 flex flex-wrap gap-2">
-              {GOALS_OPTIONS.map((goal) => (
+              {config.treatmentGoals.filter(g => g.enabled).map((goal) => (
                 <button
-                  key={goal.value}
+                  key={goal.id}
                   type="button"
-                  onClick={() => handleGoalToggle(goal.value)}
+                  onClick={() => handleGoalToggle(goal.fieldName)}
                   className={`rounded-full px-4 py-2 text-sm font-medium transition ${
-                    formData.goals?.includes(goal.value)
+                    formData.goals?.includes(goal.fieldName)
                       ? 'bg-[#35d0a0] text-[#0c2332]'
                       : 'bg-[#f5f3f0] text-[#5c6772] hover:bg-[#e2e0db]'
                   }`}
