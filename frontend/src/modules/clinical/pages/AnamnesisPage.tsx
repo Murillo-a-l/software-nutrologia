@@ -44,21 +44,14 @@ const ULTRA_PROCESSED_OPTIONS = [
 
 // Extended form state with physical exam
 interface AnamnesisFormData extends CreateClinicalIntakeData {
-  // Physical Exam
+  // Physical Exam - Vital Signs (separate fields)
   bloodPressure?: string;
   heartRate?: string;
   temperature?: string;
   respiratoryRate?: string;
   oxygenSaturation?: string;
-  generalCondition?: string;
-  headNeck?: string;
-  cardiovascular?: string;
-  respiratory?: string;
-  abdomen?: string;
-  psychism?: string;
-  spine?: string;
-  upperLimbs?: string;
-  lowerLimbs?: string;
+  // Physical Exam - Segmental (single textarea for flexibility)
+  physicalExamText?: string;
   // Diagnostic hypothesis and plan
   diagnosticHypothesis?: string;
   plan?: string;
@@ -104,15 +97,15 @@ const initialFormState: AnamnesisFormData = {
   temperature: '',
   respiratoryRate: '',
   oxygenSaturation: '',
-  generalCondition: 'BEG, corado, hidratado, acianótico, anictérico, eupneico, afebril',
-  headNeck: 'Sem dor a palpação muscular, sem linfonodos palpáveis',
-  cardiovascular: 'BCR NF 2T SS, pulsos periféricos presentes bilateralmente e simétricos',
-  respiratory: 'MV presente bilateralmente, simétrico. Sem RA.',
-  abdomen: 'RHA+, flácido, plano, percussão sem anormalidades, indolor a palpação superficial e profunda nos quatro quadrantes.',
-  psychism: 'Lúcido, orientado no tempo e espaço, pensamentos lineares.',
-  spine: 'Sem dor a palpação de musculatura paravertebral, sem contratura muscular.',
-  upperLimbs: 'Força grau V bilateral, trofismo adequado para a idade, sensibilidade adequada',
-  lowerLimbs: 'Força grau V bilateral, trofismo adequado para a idade, sensibilidade adequada, sem encurtamento muscular',
+  physicalExamText: `Ectoscopia: BEG, corado, hidratado, acianótico, anictérico, eupneico, afebril
+CP: Sem dor a palpação muscular, sem linfonodos palpáveis
+ACV: BCR NF 2T SS, pulsos periféricos presentes bilateralmente e simétricos
+AR: MV presente bilateralmente, simétrico. Sem RA.
+Abdome: RHA+, flácido, plano, percussão sem anormalidades, indolor a palpação superficial e profunda
+Psiquismo: Lúcido, orientado no tempo e espaço
+Coluna: Sem dor a palpação de musculatura paravertebral
+MMSS: Força grau V bilateral, trofismo adequado
+MMII: Força grau V bilateral, trofismo adequado, sem edema`,
   diagnosticHypothesis: '',
   plan: '',
 };
@@ -137,6 +130,14 @@ export function AnamnesisPage() {
   const [comorbidityItems, setComorbidityItems] = useState<string[]>([]);
   const [newComorbidityItem, setNewComorbidityItem] = useState('');
 
+  // Dynamic list items for RED-S symptoms
+  const [redsSymptomItems, setRedsSymptomItems] = useState<string[]>([]);
+  const [newRedsSymptomItem, setNewRedsSymptomItem] = useState('');
+
+  // Dynamic list items for treatment goals
+  const [goalItems, setGoalItems] = useState<string[]>([]);
+  const [newGoalItem, setNewGoalItem] = useState('');
+
   useEffect(() => {
     loadPatients();
   }, []);
@@ -148,6 +149,8 @@ export function AnamnesisPage() {
       setFormData(initialFormState);
       setFamilyHistoryItems([]);
       setComorbidityItems([]);
+      setRedsSymptomItems([]);
+      setGoalItems([]);
     }
   }, [selectedPatientId]);
 
@@ -236,14 +239,17 @@ export function AnamnesisPage() {
       setError(null);
       setSuccess(false);
 
-      // Combine family history items into notes
+      // Combine dynamic lists into notes
       const familyNotes = familyHistoryItems.join('\n');
       const comorbNotes = comorbidityItems.join('\n');
+      const redsNotes = redsSymptomItems.join('\n');
+      const goalNotes = goalItems.join('\n');
 
       await apiClient.saveClinicalIntake(selectedPatientId, {
         ...formData,
         familyHistoryNotes: familyNotes,
         otherComorbidities: comorbNotes,
+        otherSymptoms: redsNotes,
         // Store physical exam and HD/Plan in notes for now
         notes: JSON.stringify({
           physicalExam: {
@@ -252,18 +258,11 @@ export function AnamnesisPage() {
             temperature: formData.temperature,
             respiratoryRate: formData.respiratoryRate,
             oxygenSaturation: formData.oxygenSaturation,
-            generalCondition: formData.generalCondition,
-            headNeck: formData.headNeck,
-            cardiovascular: formData.cardiovascular,
-            respiratory: formData.respiratory,
-            abdomen: formData.abdomen,
-            psychism: formData.psychism,
-            spine: formData.spine,
-            upperLimbs: formData.upperLimbs,
-            lowerLimbs: formData.lowerLimbs,
+            physicalExamText: formData.physicalExamText,
           },
           diagnosticHypothesis: formData.diagnosticHypothesis,
           plan: formData.plan,
+          customGoals: goalNotes,
           additionalNotes: formData.notes,
         }),
       });
@@ -306,6 +305,28 @@ export function AnamnesisPage() {
 
   const removeComorbidityItem = (index: number) => {
     setComorbidityItems(comorbidityItems.filter((_, i) => i !== index));
+  };
+
+  const addRedsSymptomItem = () => {
+    if (newRedsSymptomItem.trim()) {
+      setRedsSymptomItems([...redsSymptomItems, newRedsSymptomItem.trim()]);
+      setNewRedsSymptomItem('');
+    }
+  };
+
+  const removeRedsSymptomItem = (index: number) => {
+    setRedsSymptomItems(redsSymptomItems.filter((_, i) => i !== index));
+  };
+
+  const addGoalItem = () => {
+    if (newGoalItem.trim()) {
+      setGoalItems([...goalItems, newGoalItem.trim()]);
+      setNewGoalItem('');
+    }
+  };
+
+  const removeGoalItem = (index: number) => {
+    setGoalItems(goalItems.filter((_, i) => i !== index));
   };
 
   const selectedPatient = patients.find((p) => p.id === selectedPatientId);
@@ -683,89 +704,24 @@ export function AnamnesisPage() {
               </div>
             </div>
 
-            {/* Exame segmentar */}
-            <div className="mt-4 space-y-3">
-              <div>
-                <label className="block text-xs font-medium text-[#7a838b]">Estado Geral</label>
-                <textarea
-                  value={formData.generalCondition}
-                  onChange={(e) => setFormData({ ...formData, generalCondition: e.target.value })}
-                  rows={1}
-                  className="mt-1 w-full rounded-lg border border-[#e2e0db] bg-white px-3 py-2 text-sm text-[#0c2332] focus:border-[#35d0a0] focus:outline-none"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-[#7a838b]">CP (Cabeça/Pescoço)</label>
-                <textarea
-                  value={formData.headNeck}
-                  onChange={(e) => setFormData({ ...formData, headNeck: e.target.value })}
-                  rows={1}
-                  className="mt-1 w-full rounded-lg border border-[#e2e0db] bg-white px-3 py-2 text-sm text-[#0c2332] focus:border-[#35d0a0] focus:outline-none"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-[#7a838b]">ACV (Cardiovascular)</label>
-                <textarea
-                  value={formData.cardiovascular}
-                  onChange={(e) => setFormData({ ...formData, cardiovascular: e.target.value })}
-                  rows={1}
-                  className="mt-1 w-full rounded-lg border border-[#e2e0db] bg-white px-3 py-2 text-sm text-[#0c2332] focus:border-[#35d0a0] focus:outline-none"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-[#7a838b]">AR (Respiratório)</label>
-                <textarea
-                  value={formData.respiratory}
-                  onChange={(e) => setFormData({ ...formData, respiratory: e.target.value })}
-                  rows={1}
-                  className="mt-1 w-full rounded-lg border border-[#e2e0db] bg-white px-3 py-2 text-sm text-[#0c2332] focus:border-[#35d0a0] focus:outline-none"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-[#7a838b]">Abdome</label>
-                <textarea
-                  value={formData.abdomen}
-                  onChange={(e) => setFormData({ ...formData, abdomen: e.target.value })}
-                  rows={1}
-                  className="mt-1 w-full rounded-lg border border-[#e2e0db] bg-white px-3 py-2 text-sm text-[#0c2332] focus:border-[#35d0a0] focus:outline-none"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-[#7a838b]">Psiquismo</label>
-                <textarea
-                  value={formData.psychism}
-                  onChange={(e) => setFormData({ ...formData, psychism: e.target.value })}
-                  rows={1}
-                  className="mt-1 w-full rounded-lg border border-[#e2e0db] bg-white px-3 py-2 text-sm text-[#0c2332] focus:border-[#35d0a0] focus:outline-none"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-[#7a838b]">Coluna</label>
-                <textarea
-                  value={formData.spine}
-                  onChange={(e) => setFormData({ ...formData, spine: e.target.value })}
-                  rows={1}
-                  className="mt-1 w-full rounded-lg border border-[#e2e0db] bg-white px-3 py-2 text-sm text-[#0c2332] focus:border-[#35d0a0] focus:outline-none"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-[#7a838b]">MMSS</label>
-                <textarea
-                  value={formData.upperLimbs}
-                  onChange={(e) => setFormData({ ...formData, upperLimbs: e.target.value })}
-                  rows={1}
-                  className="mt-1 w-full rounded-lg border border-[#e2e0db] bg-white px-3 py-2 text-sm text-[#0c2332] focus:border-[#35d0a0] focus:outline-none"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-[#7a838b]">MMII</label>
-                <textarea
-                  value={formData.lowerLimbs}
-                  onChange={(e) => setFormData({ ...formData, lowerLimbs: e.target.value })}
-                  rows={1}
-                  className="mt-1 w-full rounded-lg border border-[#e2e0db] bg-white px-3 py-2 text-sm text-[#0c2332] focus:border-[#35d0a0] focus:outline-none"
-                />
-              </div>
+            {/* Exame segmentar - textarea único para flexibilidade */}
+            <div className="mt-4">
+              <label className="block text-xs font-medium text-[#7a838b]">Exame Segmentar (edite livremente)</label>
+              <textarea
+                value={formData.physicalExamText}
+                onChange={(e) => setFormData({ ...formData, physicalExamText: e.target.value })}
+                rows={10}
+                className="mt-1 w-full rounded-lg border border-[#e2e0db] bg-white px-3 py-2 text-sm text-[#0c2332] focus:border-[#35d0a0] focus:outline-none font-mono"
+                placeholder="Ectoscopia: BEG, corado...
+CP: ...
+ACV: ...
+AR: ...
+Abdome: ...
+Psiquismo: ...
+Coluna: ...
+MMSS: ...
+MMII: ..."
+              />
             </div>
           </div>
 
@@ -809,13 +765,44 @@ export function AnamnesisPage() {
                 onChange={(checked) => setFormData({ ...formData, hasMoodChanges: checked })}
               />
             </div>
-            <input
-              type="text"
-              value={formData.otherSymptoms}
-              onChange={(e) => setFormData({ ...formData, otherSymptoms: e.target.value })}
-              className="mt-3 w-full rounded-xl border border-[#e2e0db] bg-white px-4 py-2 text-sm text-[#0c2332] focus:border-[#35d0a0] focus:outline-none"
-              placeholder="Outros sintomas..."
-            />
+
+            {/* Dynamic symptom list */}
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-[#5c6772]">Outros sintomas (adicione livremente)</label>
+              <div className="mt-2 flex gap-2">
+                <input
+                  type="text"
+                  value={newRedsSymptomItem}
+                  onChange={(e) => setNewRedsSymptomItem(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addRedsSymptomItem())}
+                  className="flex-1 rounded-xl border border-[#e2e0db] bg-white px-4 py-2 text-sm text-[#0c2332] focus:border-[#35d0a0] focus:outline-none"
+                  placeholder="Ex: Cefaleia frequente, Insônia, Câimbras..."
+                />
+                <button
+                  type="button"
+                  onClick={addRedsSymptomItem}
+                  className="rounded-xl bg-[#35d0a0] px-4 py-2 text-sm font-semibold text-[#0c2332] hover:bg-[#2eb48a]"
+                >
+                  +
+                </button>
+              </div>
+              {redsSymptomItems.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {redsSymptomItems.map((item, index) => (
+                    <span key={index} className="flex items-center gap-1 rounded-full bg-[#f5f3f0] px-3 py-1 text-sm text-[#5c6772]">
+                      {item}
+                      <button
+                        type="button"
+                        onClick={() => removeRedsSymptomItem(index)}
+                        className="ml-1 text-[#7a838b] hover:text-red-500"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* HD - Hipótese Diagnóstica */}
@@ -861,6 +848,44 @@ export function AnamnesisPage() {
                 </button>
               ))}
             </div>
+
+            {/* Dynamic goals list */}
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-[#5c6772]">Objetivos personalizados (adicione livremente)</label>
+              <div className="mt-2 flex gap-2">
+                <input
+                  type="text"
+                  value={newGoalItem}
+                  onChange={(e) => setNewGoalItem(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addGoalItem())}
+                  className="flex-1 rounded-xl border border-[#e2e0db] bg-white px-4 py-2 text-sm text-[#0c2332] focus:border-[#35d0a0] focus:outline-none"
+                  placeholder="Ex: Reduzir % gordura visceral, Melhorar sono..."
+                />
+                <button
+                  type="button"
+                  onClick={addGoalItem}
+                  className="rounded-xl bg-[#35d0a0] px-4 py-2 text-sm font-semibold text-[#0c2332] hover:bg-[#2eb48a]"
+                >
+                  +
+                </button>
+              </div>
+              {goalItems.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {goalItems.map((item, index) => (
+                    <span key={index} className="flex items-center gap-1 rounded-full bg-[#f5f3f0] px-3 py-1 text-sm text-[#5c6772]">
+                      {item}
+                      <button
+                        type="button"
+                        onClick={() => removeGoalItem(index)}
+                        className="ml-1 text-[#7a838b] hover:text-red-500"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Suplementos */}
@@ -883,6 +908,8 @@ export function AnamnesisPage() {
                 setFormData(initialFormState);
                 setFamilyHistoryItems([]);
                 setComorbidityItems([]);
+                setRedsSymptomItems([]);
+                setGoalItems([]);
               }}
               className="rounded-2xl border border-[#e2e0db] bg-white px-6 py-3 text-sm font-semibold text-[#5c6772] hover:bg-[#f5f3f0]"
             >
