@@ -1,8 +1,8 @@
-import type { SVGProps } from 'react';
+import type { SVGProps, ReactElement } from 'react';
 
-export type Icon = (props: SVGProps<SVGSVGElement>) => JSX.Element;
+export type Icon = (props: SVGProps<SVGSVGElement>) => ReactElement;
 
-function createIcon(paths: JSX.Element[]): Icon {
+function createIcon(paths: ReactElement[]): Icon {
   return function IconComponent({ strokeWidth = 1.8, ...props }: SVGProps<SVGSVGElement>) {
     return (
       <svg
