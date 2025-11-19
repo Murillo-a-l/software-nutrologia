@@ -171,7 +171,7 @@ export function AnamnesisSettingsPage() {
               onClick={() => setActiveSection(section)}
               className={`rounded-xl px-4 py-2 text-sm font-medium transition ${
                 activeSection === section
-                  ? 'bg-[#35d0a0] text-[#0c2332]'
+                  ? 'bg-[#0c2332] text-white'
                   : 'bg-[#f5f3f0] text-[#5c6772] hover:bg-[#e2e0db]'
               }`}
             >
@@ -202,7 +202,7 @@ export function AnamnesisSettingsPage() {
                 onClick={() => toggleOption(activeSection, option.id)}
                 className={`h-5 w-5 rounded border-2 flex items-center justify-center ${
                   option.enabled
-                    ? 'border-[#35d0a0] bg-[#35d0a0] text-white'
+                    ? 'border-[#0c2332] bg-[#0c2332] text-white'
                     : 'border-[#e2e0db] bg-white'
                 }`}
               >
@@ -218,7 +218,7 @@ export function AnamnesisSettingsPage() {
                 type="text"
                 value={option.label}
                 onChange={(e) => updateOptionLabel(activeSection, option.id, e.target.value)}
-                className={`flex-1 rounded-lg border border-transparent px-2 py-1 text-sm focus:border-[#35d0a0] focus:outline-none ${
+                className={`flex-1 rounded-lg border border-transparent px-2 py-1 text-sm focus:border-[#0c2332] focus:outline-none ${
                   option.enabled ? 'text-[#0c2332]' : 'text-gray-400'
                 }`}
               />
@@ -265,7 +265,7 @@ export function AnamnesisSettingsPage() {
             value={newItemLabel}
             onChange={(e) => setNewItemLabel(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && addOption(activeSection)}
-            className="flex-1 rounded-xl border border-[#e2e0db] bg-white px-4 py-2 text-sm text-[#0c2332] focus:border-[#35d0a0] focus:outline-none"
+            className="flex-1 rounded-xl border border-[#e2e0db] bg-white px-4 py-2 text-sm text-[#0c2332] focus:border-[#0c2332] focus:outline-none"
             placeholder={`Adicionar novo item em ${sectionLabels[activeSection]}...`}
           />
           <button
